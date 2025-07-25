@@ -2,7 +2,9 @@ import { tool } from "ai";
 import { z } from "zod";
 
 export const entityLookup = tool({
+  name: "entityLookup",
   description: "Lookup a movie by exact title to get its Qloo entity ID.",
+
   inputSchema: z.object({ title: z.string() }),
   execute: async ({ title }, _opts) => {
     console.log("[entityLookup] called with title:", title);
@@ -91,6 +93,7 @@ function slimDownEntities(raw: any): SlimMovie[] {
 }
 
 export const getRecommendations = tool({
+  name: "getRecommendations",
   description:
     "Get movie recommendations from Qloo based on a movie entity ID.",
   inputSchema: z.object({
