@@ -1,14 +1,13 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-export const entityLookup = tool({
+export const entityIdLookup = tool({
   name: "entityLookup",
   description: "Lookup a movie by exact title to get its Qloo entity ID.",
 
   inputSchema: z.object({ title: z.string() }),
-  execute: async ({ title }, _opts) => {
+  execute: async ({ title }) => {
     console.log("[entityLookup] called with title:", title);
-
     const url =
       `${process.env.QLOO_BASE_URL}/search` +
       `?query=${encodeURIComponent(title)}` +
@@ -92,7 +91,7 @@ function slimDownEntities(raw: any): SlimMovie[] {
   });
 }
 
-export const getRecommendations = tool({
+export const getRecommendationsByEntityId = tool({
   name: "getRecommendations",
   description:
     "Get movie recommendations from Qloo based on a movie entity ID.",
@@ -100,7 +99,7 @@ export const getRecommendations = tool({
     entityId: z.string(),
     take: z.number().optional(),
   }),
-  execute: async ({ entityId, take = 5 }, _opts) => {
+  execute: async ({ entityId, take = 5 }) => {
     console.log(
       "[getRecommendations] called with entityId:",
       entityId,
@@ -123,7 +122,7 @@ export const getRecommendations = tool({
       },
     });
     const data = await res.json();
-    console.log("↪ raw insights payload:", JSON.stringify(data, null, 2));
+    // console.log("↪ raw insights payload:", JSON.stringify(data, null, 2));
     const slimList: SlimMovie[] = slimDownEntities(data);
     console.log("↪ slimList:", JSON.stringify(slimList, null, 2));
     console.log(JSON.stringify(slimList, null, 2));
