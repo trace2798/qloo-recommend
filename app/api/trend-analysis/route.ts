@@ -2,26 +2,10 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
   convertToModelMessages,
   extractReasoningMiddleware,
-  generateText,
   streamText,
   UIMessage,
   wrapLanguageModel,
 } from "ai";
-import { NextResponse } from "next/server";
-
-const ENTITY_TYPES = {
-  movie: "urn:entity:movie",
-  book: "urn:entity:book",
-  artist: "urn:entity:artist",
-  brand: "urn:entity:brand",
-  podcast: "urn:entity:podcast",
-  tvShow: "urn:entity:tvshow",
-  game: "urn:entity:videogame",
-  destination: "urn:entity:destination",
-  person: "urn:entity:person",
-  place: "urn:entity:place",
-} as const;
-type EntityType = keyof typeof ENTITY_TYPES;
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY!,

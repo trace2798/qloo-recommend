@@ -1,6 +1,4 @@
-import Chat from "@/components/chat";
-import { TrendingChart } from "@/components/trending";
-import Image from "next/image";
+import { Analysis } from "@/components/analysis";
 
 export default function Home() {
   return (
@@ -103,7 +101,8 @@ export default function Home() {
     // </div>
     <div>
       {/* <Chat/> */}
-      <TrendingChart/>
+      {/* <TrendingChart/> */}
+      <Analysis />
     </div>
   );
 }

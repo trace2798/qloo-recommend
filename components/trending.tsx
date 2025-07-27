@@ -90,7 +90,7 @@ export function TrendingChart() {
 
   const { messages, sendMessage } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/analysis",
+      api: "/api/trend-analysis",
       credentials: "include",
       headers: { "Custom-Header": "value" },
     }),

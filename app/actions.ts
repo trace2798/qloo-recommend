@@ -92,3 +92,27 @@ export async function getTrendingData({
   console.log("TRENDING", json.results);
   return json.results.trending;
 }
+
+export async function getDemographicData({ entityId }: { entityId: string }) {
+  const qs = new URLSearchParams({
+    "signal.interests.entities": entityId,
+  });
+  const url = `${process.env.QLOO_BASE_URL}/v2/insights?filter.type=urn:demographics&signal.interests.entities=${entityId}`;
+
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": process.env.QLOO_API_KEY!,
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Trending API error: ${text}`);
+  }
+
+  const json = await res.json();
+  console.log("Demo ANalysis", json.results.demographics);
+  return json.results.demographics;
+}
