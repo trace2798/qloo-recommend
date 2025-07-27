@@ -29,6 +29,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ChevronDownIcon } from "lucide-react";
 
 const ENTITY_TYPES = {
   movie: "urn:entity:movie",
@@ -56,6 +63,8 @@ export type TrendingItem = {
 export function TrendingChart() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<EntityType>("movie");
+  const [startOpen, setStartOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [data, setData] = useState<TrendingItem[]>([]);
@@ -122,58 +131,124 @@ export function TrendingChart() {
 
   return (
     <div className="space-y-6 p-4 w-full max-w-6xl mx-auto">
+      <div>
+        <h1 className="w-full text-4xl underline">Trend Analysis</h1>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          placeholder="Entity title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <Select onValueChange={(val: EntityType) => setType(val)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {Object.entries(ENTITY_TYPES).map(([key]) => (
-                <SelectItem value={key} key={key}>
-                  {key}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <div>
+          <Label htmlFor="entityTitle" className="px-1 mb-3">
+            Entity Title
+          </Label>
+          <Input
+            placeholder="Entity title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full max-w-[250px]"
+          />
+        </div>
+        <div>
+          <Label htmlFor="startDate" className="px-1 mb-3">
+            Category
+          </Label>
+          <Select
+            defaultValue={type}
+            onValueChange={(val: EntityType) => setType(val)}
+          >
+            <SelectTrigger className="w-full max-w-[250px]">
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {Object.entries(ENTITY_TYPES).map(([key]) => (
+                  <SelectItem value={key} key={key}>
+                    {key}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block mb-1">Start Date</label>
-          <Calendar
-            mode="single"
-            selected={startDate}
-            onSelect={setStartDate}
-            className="border rounded"
-          />
+          <Label htmlFor="startDate" className="px-1 mb-3">
+            Start Date
+          </Label>
+          <Popover open={startOpen} onOpenChange={setStartOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                id="date"
+                className="w-full max-w-[250px] justify-between font-normal"
+              >
+                {startDate ? startDate.toLocaleDateString() : "Select date"}
+                <ChevronDownIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto overflow-hidden p-0"
+              align="start"
+            >
+              <Calendar
+                mode="single"
+                selected={startDate}
+                captionLayout="dropdown"
+                onSelect={(date) => {
+                  setStartDate(date);
+                  setStartOpen(false);
+                }}
+                hidden={{ after: new Date() }}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         <div>
-          <label className="block mb-1">End Date</label>
-          <Calendar
-            mode="single"
-            selected={endDate}
-            onSelect={setEndDate}
-            className="border rounded"
-          />
+          <Label htmlFor="endDate" className="px-1 mb-3">
+            End Date
+          </Label>
+          <Popover open={endOpen} onOpenChange={setEndOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                id="date"
+                className="w-full max-w-[250px] justify-between font-normal"
+              >
+                {endDate ? endDate.toLocaleDateString() : "Select date"}
+                <ChevronDownIcon />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto overflow-hidden p-0"
+              align="start"
+            >
+              <Calendar
+                mode="single"
+                selected={endDate}
+                captionLayout="dropdown"
+                onSelect={(date) => {
+                  setEndDate(date);
+                  setEndOpen(false);
+                }}
+                disabled={{ after: new Date() }}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
-      <Button onClick={handleSubmit} disabled={loading}>
-        {loading ? "Loading..." : "Submit"}
+      <Button onClick={handleSubmit} disabled={loading || !title}>
+        {loading ? "Loading..." : "Get Analysis"}
       </Button>
       <div>
         {messages
           .filter((m) => m.role === "assistant")
           .map((message) => (
-            <div key={message.id} className="whitespace-pre-wrap">
-              AI:{" "}
+            <div
+              key={message.id}
+              className="whitespace-pre-wrap w-full max-w-5xl mx-auto"
+            >
+              <span className="text-primary/80">AI Analysis</span>
               {message.parts.map((part, i) =>
                 part.type === "text" ? <div key={i}>{part.text}</div> : null
               )}
