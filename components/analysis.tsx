@@ -20,9 +20,8 @@ import {
 } from "@/components/ui/select";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { format, parseISO } from "date-fns";
 import { useState } from "react";
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const ENTITY_TYPES = {
   movie: "urn:entity:movie",
@@ -37,15 +36,6 @@ const ENTITY_TYPES = {
   place: "urn:entity:place",
 } as const;
 type EntityType = keyof typeof ENTITY_TYPES;
-
-export type TrendingItem = {
-  date: string;
-  population_percentile: number;
-  population_rank: string;
-  population_rank_velocity: number;
-  velocity_fold_change: number;
-  population_percent_delta: number;
-};
 
 export function Analysis() {
   const [title, setTitle] = useState("");
@@ -72,7 +62,7 @@ export function Analysis() {
       console.log("DEMO", demoAnalysisData);
       setData(demoAnalysisData);
       sendMessage({
-        text: `Here is the demographic data for ${title} from the insight endpoint is: ${JSON.stringify(
+        text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
           demoAnalysisData
         )}.`,
       });
@@ -176,9 +166,7 @@ function DemographicsChart({ data }: { data: DemoData[] }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Age Affinity */}
       <section>
-        <h3 className="text-lg font-medium mb-2">Age Affinity</h3>
         <ChartContainer config={barConfig} className="min-h-[200px] w-full">
           <BarChart accessibilityLayer data={ageEntries}>
             <CartesianGrid vertical={false} />
@@ -188,11 +176,12 @@ function DemographicsChart({ data }: { data: DemoData[] }) {
             <Bar dataKey="value" fill="var(--color-value)" radius={4} />
           </BarChart>
         </ChartContainer>
+        <h3 className="text-sm font-medium mb-2 w-full text-center">
+          Age Affinity
+        </h3>
       </section>
 
-      {/* Gender Affinity */}
       <section>
-        <h3 className="text-lg font-medium mb-2">Gender Affinity</h3>
         <ChartContainer config={barConfig} className="min-h-[200px] w-full">
           <BarChart accessibilityLayer data={genderEntries}>
             <CartesianGrid vertical={false} />
@@ -202,6 +191,9 @@ function DemographicsChart({ data }: { data: DemoData[] }) {
             <Bar dataKey="value" fill="var(--color-value)" radius={4} />
           </BarChart>
         </ChartContainer>
+        <h3 className="text-sm font-medium mb-2 w-full text-center">
+          Gender Affinity
+        </h3>
       </section>
     </div>
   );
