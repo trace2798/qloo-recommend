@@ -63,6 +63,8 @@ export async function getTrendingData({
   endDate: Date;
   take?: number;
 }) {
+  console.log("START DATE", startDate);
+  console.log("END DATE", endDate);
   const urn = ENTITY_TYPES[entityType];
   const qs = new URLSearchParams({
     "signal.interests.entities": entityId,

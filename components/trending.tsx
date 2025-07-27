@@ -17,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import {
@@ -76,6 +78,15 @@ export function TrendingChart() {
       color: "var(--chart-4)",
     },
   };
+
+  const { messages, sendMessage } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/analysis",
+      credentials: "include",
+      headers: { "Custom-Header": "value" },
+    }),
+  });
+
   const handleSubmit = async () => {
     if (!startDate || !endDate) return;
     setLoading(true);
@@ -95,6 +106,13 @@ export function TrendingChart() {
           parseISO(a.date).getTime() - parseISO(b.date).getTime()
       );
       setData(trendingSorted);
+      sendMessage({
+        text: `entityName: ${title}, entityType: ${type}, dateRange: { startDate: ${startDate}, endDate: ${endDate} }.  The data from the trending endpoint is chartData: ${JSON.stringify(
+          trending
+        )}. Current chart configs, chartConfig: ${JSON.stringify(
+          chartConfig
+        )} `,
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -150,58 +168,72 @@ export function TrendingChart() {
       <Button onClick={handleSubmit} disabled={loading}>
         {loading ? "Loading..." : "Submit"}
       </Button>
-      {data.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {(
-            [
-              "population_percentile",
-              "population_rank_velocity",
-              "velocity_fold_change",
-              "population_percent_delta",
-            ] as Array<keyof typeof chartConfig>
-          ).map((key) => {
-            const title = chartConfig[key].label;
-            return (
-              <figure key={key} className="space-y-2">
-                <ChartContainer config={chartConfig} className="h-72 w-full">
-                  <LineChart
-                    data={data}
-                    margin={{ top: 20, right: 20, bottom: 5, left: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={(d: string) =>
-                        format(parseISO(d), "MMM dd")
-                      }
-                    />
-                    <YAxis />
-                    <Tooltip
-                      content={
-                        <ChartTooltipContent
-                          nameKey={key}
-                          labelFormatter={(d: string) =>
-                            format(parseISO(d), "PPP")
-                          }
-                        />
-                      }
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey={key}
-                      stroke={chartConfig[key].color}
-                      dot={{ r: 3 }}
-                    />
-                  </LineChart>
-                </ChartContainer>
-                <figcaption className="text-center text-sm text-gray-600">
-                  {title} Over Time
-                </figcaption>
-              </figure>
-            );
-          })}
-        </div>
-      )}
+      <div>
+        {messages
+          .filter((m) => m.role === "assistant")
+          .map((message) => (
+            <div key={message.id} className="whitespace-pre-wrap">
+              AI:{" "}
+              {message.parts.map((part, i) =>
+                part.type === "text" ? <div key={i}>{part.text}</div> : null
+              )}
+            </div>
+          ))}
+      </div>
+      <div>
+        {data.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {(
+              [
+                "population_percentile",
+                "population_rank_velocity",
+                "velocity_fold_change",
+                "population_percent_delta",
+              ] as Array<keyof typeof chartConfig>
+            ).map((key) => {
+              const title = chartConfig[key].label;
+              return (
+                <figure key={key} className="space-y-2">
+                  <ChartContainer config={chartConfig} className="h-72 w-full">
+                    <LineChart
+                      data={data}
+                      margin={{ top: 20, right: 20, bottom: 5, left: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tickFormatter={(d: string) =>
+                          format(parseISO(d), "MMM dd")
+                        }
+                      />
+                      <YAxis />
+                      <Tooltip
+                        content={
+                          <ChartTooltipContent
+                            nameKey={key}
+                            labelFormatter={(d: string) =>
+                              format(parseISO(d), "PPP")
+                            }
+                          />
+                        }
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey={key}
+                        stroke={chartConfig[key].color}
+                        dot={{ r: 3 }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                  <figcaption className="text-center text-sm text-gray-600">
+                    {title} Over Time
+                  </figcaption>
+                </figure>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
