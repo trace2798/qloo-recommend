@@ -399,7 +399,7 @@ const searchQloo = async ({
       "X-Api-Key": process.env.QLOO_API_KEY!,
     },
   });
-  console.log("RES Search", res);
+  // console.log("RES Search", res);
   const json = await res.json();
   console.log("RES JSON", json);
   const first = Array.isArray(json.results) && json.results[0];
@@ -487,3 +487,4 @@ const fetchRecommendations = async ({
   const data = await res.json();
   return slimDownEntities(data);
 };
+
