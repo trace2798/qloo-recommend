@@ -1,6 +1,11 @@
 "use client";
 
-import { getDemographicData, getTasteData, searchQloo } from "@/app/actions";
+import {
+  getDemographicData,
+  getTasteData,
+  getTrendingData,
+  searchQloo,
+} from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   ChartConfig,
@@ -21,9 +26,19 @@ import {
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Markdown } from "./markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format, parseISO, subWeeks } from "date-fns";
 
 const ENTITY_TYPES = {
   movie: "urn:entity:movie",
@@ -38,14 +53,23 @@ const ENTITY_TYPES = {
   place: "urn:entity:place",
 } as const;
 type EntityType = keyof typeof ENTITY_TYPES;
+type TrendingItem = {
+  date: string;
+  population_percentile: number;
+  population_rank_velocity: number;
+  velocity_fold_change: number;
+  population_percent_delta: number;
+};
 
 export function Analysis() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<EntityType>("movie");
   const [data, setData] = useState<any[]>([]);
   const [tasteData, setTasteData] = useState<any[]>([]);
+  const [trendingData, setTrendingData] = useState<TrendingItem[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const endDate = new Date();
+  const startDate = subWeeks(endDate, 24);
   const { messages, sendMessage } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/demo-analysis",
@@ -60,6 +84,24 @@ export function Analysis() {
       headers: { "Custom-Header": "value" },
     }),
   });
+  const chartConfig: ChartConfig = {
+    population_percentile: {
+      label: "Popularity Percentile",
+      color: "var(--chart-1)",
+    },
+    population_rank_velocity: {
+      label: "Rank Velocity",
+      color: "var(--chart-2)",
+    },
+    velocity_fold_change: {
+      label: "Velocity Fold Change",
+      color: "var(--chart-3)",
+    },
+    population_percent_delta: {
+      label: "Percentile Δ",
+      color: "var(--chart-4)",
+    },
+  };
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -69,11 +111,23 @@ export function Analysis() {
         entityId: searchRes?.entityId!,
       });
       console.log("DEMO", demoAnalysisData);
+      setData(demoAnalysisData);
       const tasteAnalysisData = await getTasteData({
         entityId: searchRes?.entityId!,
       });
       console.log("Tags", tasteAnalysisData);
-      setData(demoAnalysisData);
+      const trending = await getTrendingData({
+        entityId: searchRes?.entityId!,
+        entityType: type,
+        startDate,
+        endDate,
+        take: 50,
+      });
+      const sortedTrending = trending.sort(
+        (a: TrendingItem, b: TrendingItem) =>
+          parseISO(a.date).getTime() - parseISO(b.date).getTime()
+      );
+      setTrendingData(sortedTrending);
       sendMessage({
         text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
           demoAnalysisData
@@ -93,7 +147,7 @@ export function Analysis() {
 
   return (
     <>
-      <div className="space-y-6 p-4 w-full max-w-6xl mx-auto">
+      <div className="space-y-6 p-4 w-full max-w-5xl mx-auto">
         <div>
           <h1 className="w-full text-4xl underline">In Depth Analysis</h1>
         </div>
@@ -137,14 +191,15 @@ export function Analysis() {
           {loading ? "Loading..." : "Get Analysis"}
         </Button>
       </div>
-      <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto items-center justify-center mt-5 pb-24">
+      <div className="flex flex-col space-y-6 w-full max-w-5xl mx-auto items-center justify-center mt-5 pb-24">
         <Tabs
           defaultValue="demo"
           className="w-full max-w-6xl mx-auto items-start"
         >
-          <TabsList className="">
+          <TabsList className="mb-5">
             <TabsTrigger value="demo">Demographic</TabsTrigger>
             <TabsTrigger value="taste">Taste</TabsTrigger>
+            <TabsTrigger value="trend">Trend</TabsTrigger>
           </TabsList>
           <TabsContent value="demo" className="flex justify-center w-full">
             <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
@@ -163,7 +218,6 @@ export function Analysis() {
                       {message.parts.map((part, i) =>
                         part.type === "text" ? (
                           <div key={i} className="">
-                            {/* <Markdown>{part.text}</Markdown> */}
                             <Markdown>{part.text}</Markdown>
                           </div>
                         ) : null
@@ -188,13 +242,79 @@ export function Analysis() {
                       {message.parts.map((part, i) =>
                         part.type === "text" ? (
                           <div key={i} className="">
-                            {/* <Markdown>{part.text}</Markdown> */}
                             <Markdown>{part.text}</Markdown>
                           </div>
                         ) : null
                       )}
                     </div>
                   ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="trend" className="flex justify-center w-full">
+            <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
+              <div>
+                {trendingData.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {(
+                      [
+                        "population_percentile",
+                        "population_rank_velocity",
+                        "velocity_fold_change",
+                        "population_percent_delta",
+                      ] as Array<keyof typeof chartConfig>
+                    ).map((key) => {
+                      const title = chartConfig[key].label;
+                      return (
+                        <figure key={key} className="space-y-2">
+                          <ChartContainer
+                            config={chartConfig}
+                            className="h-72 w-full"
+                          >
+                            <LineChart
+                              data={trendingData}
+                              margin={{
+                                top: 20,
+                                right: 20,
+                                bottom: 5,
+                                left: 0,
+                              }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis
+                                dataKey="date"
+                                tickFormatter={(d: string) =>
+                                  format(parseISO(d), "MMM dd")
+                                }
+                              />
+                              <YAxis />
+                              <Tooltip
+                                content={
+                                  <ChartTooltipContent
+                                    nameKey={key}
+                                    labelFormatter={(d: string) =>
+                                      format(parseISO(d), "PPP")
+                                    }
+                                  />
+                                }
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey={key}
+                                stroke={chartConfig[key].color}
+                                dot={{ r: 3 }}
+                              />
+                            </LineChart>
+                          </ChartContainer>
+                          <figcaption className="text-center text-sm text-gray-600">
+                            {title} Over Time
+                          </figcaption>
+                        </figure>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -219,6 +339,19 @@ const barConfig = {
   },
 } satisfies ChartConfig;
 
+const trendConfig: ChartConfig = {
+  population_percentile: {
+    label: "Popularity Percentile",
+    color: "var(--chart-1)",
+  },
+  population_rank_velocity: { label: "Rank Velocity", color: "var(--chart-2)" },
+  velocity_fold_change: {
+    label: "Velocity Fold Change",
+    color: "var(--chart-3)",
+  },
+  population_percent_delta: { label: "Percentile Δ", color: "var(--chart-4)" },
+} satisfies ChartConfig;
+
 function DemographicsChart({ data }: { data: DemoData[] }) {
   const { query } = data[0];
 
@@ -226,6 +359,7 @@ function DemographicsChart({ data }: { data: DemoData[] }) {
     category: k.replace(/_/g, " "),
     value: v,
   }));
+
   const genderEntries = Object.entries(query.gender).map(([k, v]) => ({
     category: k.charAt(0).toUpperCase() + k.slice(1),
     value: v,
@@ -265,3 +399,5 @@ function DemographicsChart({ data }: { data: DemoData[] }) {
     </div>
   );
 }
+
+function TrendingCharts({ data }: { data: any[] }) {}
