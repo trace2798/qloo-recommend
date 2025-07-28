@@ -1,4 +1,4 @@
-import Chat from "@/components/chat";
+import Chat from "@/components/chat-22";
 
 export default function Page() {
   return (

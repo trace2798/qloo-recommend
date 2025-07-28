@@ -307,66 +307,139 @@ const model = wrapLanguageModel({
   middleware: extractReasoningMiddleware({ tagName: "reasoning" }),
 });
 
+// const systemPrompt =
+//   "You are the Qloo AI Recommender’s “intent parser.”\n" +
+//   "When the user sends a query, you **must** emit exactly one JSON object (no prose, no markdown, no extra fields) with these two properties:\n\n" +
+//   '• "title" (string) – the name of the thing the user is asking about\n' +
+//   '• "type" (string) – one of: movie, book, artist, brand, podcast, tvShow, game, destination, person, place\n\n' +
+//   "Make sure your output is valid JSON (double‑quoted keys and strings) and contains **only** those two keys.\n\n" +
+//   "Example outputs:\n" +
+//   "```json\n" +
+//   '{ "title": "Inception", "type": "movie" }\n' +
+//   "```\n" +
+//   "```json\n" +
+//   '{ "title": "The Beatles", "type": "artist" }\n' +
+//   "```\n\n" +
+//   "If you can’t identify both a title and one of the allowed types, respond with empty strings:\n" +
+//   "```json\n" +
+//   '{ "title": "", "type": "" }\n' +
+//   "```";
 const systemPrompt =
   "You are the Qloo AI Recommender’s “intent parser.”\n" +
-  "When the user sends a query, you **must** emit exactly one JSON object (no prose, no markdown, no extra fields) with these two properties:\n\n" +
+  "When the user sends a query, you **must** emit exactly one JSON array of objects (no prose, no markdown, no extra fields) with these two properties:\n\n" +
   '• "title" (string) – the name of the thing the user is asking about\n' +
   '• "type" (string) – one of: movie, book, artist, brand, podcast, tvShow, game, destination, person, place\n\n' +
-  "Make sure your output is valid JSON (double‑quoted keys and strings) and contains **only** those two keys.\n\n" +
+  "Make sure your output is valid JSON (double‑quoted keys and strings) and contains **only** that array.\n\n" +
   "Example outputs:\n" +
   "```json\n" +
+  "[\n" +
   '{ "title": "Inception", "type": "movie" }\n' +
+  `{ "title": "The Matrix", "type": "movie" }\n` +
+  "]\n" +
   "```\n" +
-  "```json\n" +
-  '{ "title": "The Beatles", "type": "artist" }\n' +
-  "```\n\n" +
-  "If you can’t identify both a title and one of the allowed types, respond with empty strings:\n" +
-  "```json\n" +
-  '{ "title": "", "type": "" }\n' +
-  "```";
+  "If you can’t identify any title/type pairs, respond with an empty array: []";
+type Intent = { title: string; type: EntityType };
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const {
+    id,
+    messages,
+  }: {
+    id: string;
+    messages: UIMessage[];
+  } = await req.json();
+  console.log("MESSAGE", messages);
   const latest = messages[messages.length - 1];
   console.log("LATET", latest);
-  const { text } = await generateText({
+  const { text: intentText } = await generateText({
     model: openrouter("meta-llama/llama-3.3-70b-instruct"),
     system: systemPrompt,
     messages: convertToModelMessages([latest]),
+    temperature: 0,
   });
-  console.log("TEXT:", text);
-  let intent: { title: string; type: EntityType };
+  console.log("TEXT:", intentText);
+  // let intent: { title: string; type: EntityType };
+  // try {
+  //   intent = JSON.parse(text);
+  // } catch {
+  //   return new Response(
+  //     JSON.stringify({ error: "Could not parse intent JSON" }),
+  //     { status: 400, headers: { "Content-Type": "application/json" } }
+  //   );
+  // }
+  let intents: Intent[];
   try {
-    intent = JSON.parse(text);
-  } catch {
+    const parsed = JSON.parse(intentText);
+    if (!Array.isArray(parsed)) {
+      throw new Error("Parsed intent is not an array");
+    }
+    intents = parsed;
+  } catch (err) {
     return new Response(
       JSON.stringify({ error: "Could not parse intent JSON" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
-  const lookupResult = await searchQloo({
-    title: intent.title,
-    entityType: intent.type,
-  });
-  console.log("LOOKUP", lookupResult);
-  if (!lookupResult) {
-    return new Response(JSON.stringify({ error: "No entity found" }), {
+
+  if (intents.length === 0) {
+    return new Response(JSON.stringify({ error: "No valid intents found" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // const lookupResult = await searchQloo({
+  //   title: intent.title,
+  //   entityType: intent.type,
+  // });
+  // console.log("LOOKUP", lookupResult);
+  // if (!lookupResult) {
+  //   return new Response(JSON.stringify({ error: "No entity found" }), {
+  //     status: 404,
+  //     headers: { "Content-Type": "application/json" },
+  //   });
+  // }
+
+  // const recs = await fetchRecommendations({
+  //   entityId: lookupResult.entityId,
+  //   entityType: intent.type,
+  //   take: 5,
+  // });
+  // console.log("REC", recs);
+  //  const recsJson = JSON.stringify(recs, null, 2);
+  const lookups = await Promise.all(
+    intents.map(({ title, type }) => searchQloo({ title, entityType: type }))
+  );
+  const validEntities = lookups.filter(
+    (r): r is { entityId: string; name: string } => r !== null
+  );
+  if (validEntities.length === 0) {
+    return new Response(JSON.stringify({ error: "No entities found" }), {
       status: 404,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  const recs = await fetchRecommendations({
-    entityId: lookupResult.entityId,
-    entityType: intent.type,
-    take: 5,
-  });
-  console.log("REC", recs);
-  const recsJson = JSON.stringify(recs, null, 2);
+  // Fetch recommendations for each entity and merge
+  const recLists = await Promise.all(
+    validEntities.map(({ entityId }, idx) =>
+      fetchRecommendations({
+        entityId,
+        entityType: intents[idx].type,
+        take: 5,
+      })
+    )
+  );
+  const combinedRecs = recLists.flat();
+  const recsJson = JSON.stringify(combinedRecs, null, 2);
+  // const responseSystemPrompt =
+  //   "You are a AI Recommender Assistant. \n " +
+  //   `Based on user's input, you MUST only answer from the recommendations from Qloo. The recommendation Qloo provided are: ${recsJson} \n ` +
+  //   "Now craft a friendly, concise natural‑language reply that explains and lists them. In your answer provide information about the movie like its rating and stuff if that exist";
   const responseSystemPrompt =
-    "You are a AI Recommender Assistant. \n " +
-    `Based on user's input, you MUST only answer from the recommendations from Qloo. The recommendation Qloo provided are: ${recsJson} \n ` +
-    "Now craft a friendly, concise natural‑language reply that explains and lists them. In your answer provide information about the movie like its rating and stuff if that exist";
+    "You are an AI Recommender Assistant.\n" +
+    `Based on the user's input, here are combined Qloo recommendations from all provided seeds: ${recsJson}\n` +
+    "Now craft a friendly, concise natural-language reply that explains and lists them, including available ratings and details.";
 
   const response = streamText({
     model,
@@ -400,7 +473,7 @@ const searchQloo = async ({
     },
   });
   const json = await res.json();
-  console.log("RES JSON", json);
+  console.log("Search JSON", json);
   const first = Array.isArray(json.results) && json.results[0];
 
   if (!first) return null;
@@ -476,7 +549,6 @@ const fetchRecommendations = async ({
       "X-Api-Key": process.env.QLOO_API_KEY!,
     },
   });
-  console.log("RES", res);
   if (!res.ok) {
     const errText = await res.text();
     console.error("Qloo recommendations error:", errText);
@@ -484,6 +556,7 @@ const fetchRecommendations = async ({
   }
 
   const data = await res.json();
+  console.log("REC DATA", data);
   return slimDownEntities(data);
 };
 
@@ -611,8 +684,8 @@ const fetchRecommendations = async ({
 //   const recsJson = JSON.stringify(recs, null, 2);
 //   return streamText({
 //     model: openrouter("meta-llama/llama-4-maverick"),
-//     system: `You're an AI recommender. Use ONLY these Qloo recommendations: ${recsJson}. 
-//              Format response with: 
+//     system: `You're an AI recommender. Use ONLY these Qloo recommendations: ${recsJson}.
+//              Format response with:
 //              1. Introduction mentioning the requested item
 //              2. Bullet-point list of recommendations with ratings
 //              3. Short description for each`,

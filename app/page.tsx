@@ -1,5 +1,4 @@
-import { Analysis } from "@/components/analysis";
-import Chat from "@/components/chat";
+import { Chat } from "@/components/chat-container";
 
 export default function Home() {
   return (
@@ -101,7 +100,9 @@ export default function Home() {
     //   </footer>
     // </div>
     <div>
-      <Chat/>
+      {/* <Chat/> */}
+      <Chat />
+
       {/* <TrendingChart/> */}
       {/* <Analysis /> */}
     </div>
