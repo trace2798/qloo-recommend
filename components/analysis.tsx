@@ -1,6 +1,6 @@
 "use client";
 
-import { getDemographicData, searchQloo } from "@/app/actions";
+import { getDemographicData, getTasteData, searchQloo } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import {
   ChartConfig,
@@ -22,6 +22,8 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Markdown } from "./markdown";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ENTITY_TYPES = {
   movie: "urn:entity:movie",
@@ -41,6 +43,7 @@ export function Analysis() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<EntityType>("movie");
   const [data, setData] = useState<any[]>([]);
+  const [tasteData, setTasteData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const { messages, sendMessage } = useChat({
@@ -50,7 +53,13 @@ export function Analysis() {
       headers: { "Custom-Header": "value" },
     }),
   });
-
+  const { messages: tasteMessage, sendMessage: tagsMessage } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/taste-analysis",
+      credentials: "include",
+      headers: { "Custom-Header": "value" },
+    }),
+  });
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -60,10 +69,19 @@ export function Analysis() {
         entityId: searchRes?.entityId!,
       });
       console.log("DEMO", demoAnalysisData);
+      const tasteAnalysisData = await getTasteData({
+        entityId: searchRes?.entityId!,
+      });
+      console.log("Tags", tasteAnalysisData);
       setData(demoAnalysisData);
       sendMessage({
         text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
           demoAnalysisData
+        )}.`,
+      });
+      tagsMessage({
+        text: `entityName: ${title} and entityType: ${type}. Here is the tags from the insight endpoint is: ${JSON.stringify(
+          tasteAnalysisData
         )}.`,
       });
     } catch (err) {
@@ -74,66 +92,115 @@ export function Analysis() {
   };
 
   return (
-    <div className="space-y-6 p-4 w-full max-w-6xl mx-auto">
-      <div>
-        <h1 className="w-full text-4xl underline">In Depth Analysis</h1>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <>
+      <div className="space-y-6 p-4 w-full max-w-6xl mx-auto">
         <div>
-          <Label htmlFor="entityTitle" className="px-1 mb-3">
-            Entity Title
-          </Label>
-          <Input
-            placeholder="Entity title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full max-w-[250px]"
-          />
+          <h1 className="w-full text-4xl underline">In Depth Analysis</h1>
         </div>
-        <div>
-          <Label htmlFor="startDate" className="px-1 mb-3">
-            Category
-          </Label>
-          <Select
-            defaultValue={type}
-            onValueChange={(val: EntityType) => setType(val)}
-          >
-            <SelectTrigger className="w-full max-w-[250px]">
-              <SelectValue placeholder="Select type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {Object.entries(ENTITY_TYPES).map(([key]) => (
-                  <SelectItem value={key} key={key}>
-                    {key}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <Button onClick={handleSubmit} disabled={loading || !title}>
-        {loading ? "Loading..." : "Get Analysis"}
-      </Button>
-      <div>
-        {messages
-          .filter((m) => m.role === "assistant")
-          .map((message) => (
-            <div
-              key={message.id}
-              className="whitespace-pre-wrap w-full max-w-5xl mx-auto"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="entityTitle" className="px-1 mb-3">
+              Entity Title
+            </Label>
+            <Input
+              placeholder="Entity title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full max-w-[250px]"
+            />
+          </div>
+          <div>
+            <Label htmlFor="startDate" className="px-1 mb-3">
+              Category
+            </Label>
+            <Select
+              defaultValue={type}
+              onValueChange={(val: EntityType) => setType(val)}
             >
-              <span className="text-primary/80">AI Analysis</span>
-              {message.parts.map((part, i) =>
-                part.type === "text" ? <div key={i}>{part.text}</div> : null
-              )}
-            </div>
-          ))}
+              <SelectTrigger className="w-full max-w-[250px]">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {Object.entries(ENTITY_TYPES).map(([key]) => (
+                    <SelectItem value={key} key={key}>
+                      {key}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Button onClick={handleSubmit} disabled={loading || !title}>
+          {loading ? "Loading..." : "Get Analysis"}
+        </Button>
       </div>
-      <div>{data.length > 0 && <DemographicsChart data={data} />}</div>
-    </div>
+      <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto items-center justify-center mt-5 pb-24">
+        <Tabs
+          defaultValue="demo"
+          className="w-full max-w-6xl mx-auto items-start"
+        >
+          <TabsList className="">
+            <TabsTrigger value="demo">Demographic</TabsTrigger>
+            <TabsTrigger value="taste">Taste</TabsTrigger>
+          </TabsList>
+          <TabsContent value="demo" className="flex justify-center w-full">
+            <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
+              <div>{data.length > 0 && <DemographicsChart data={data} />}</div>
+              <div>
+                {messages
+                  .filter((m) => m.role === "assistant")
+                  .map((message) => (
+                    <div
+                      key={message.id}
+                      className="flex flex-col space-y-5 w-full max-w-5xl mx-auto border p-5 rounded-2xl"
+                    >
+                      <div className="text-primary/80">
+                        AI Demographic Analysis
+                      </div>
+                      {message.parts.map((part, i) =>
+                        part.type === "text" ? (
+                          <div key={i} className="">
+                            {/* <Markdown>{part.text}</Markdown> */}
+                            <Markdown>{part.text}</Markdown>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="taste" className="flex justify-center w-full">
+            <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
+              <div>
+                {tasteMessage
+                  .filter((m) => m.role === "assistant")
+                  .map((message) => (
+                    <div
+                      key={message.id}
+                      className="flex flex-col space-y-5 w-full max-w-5xl mx-auto border p-5 rounded-2xl"
+                    >
+                      <div className="text-primary/80">AI Tags Analysis</div>
+                      {message.parts.map((part, i) =>
+                        part.type === "text" ? (
+                          <div key={i} className="">
+                            {/* <Markdown>{part.text}</Markdown> */}
+                            <Markdown>{part.text}</Markdown>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </>
   );
 }
 

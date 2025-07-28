@@ -1,3 +1,4 @@
+import { Analysis } from "@/components/analysis";
 import { Chat } from "@/components/chat-container";
 
 export default function Home() {
@@ -101,10 +102,10 @@ export default function Home() {
     // </div>
     <div>
       {/* <Chat/> */}
-      <Chat />
+      {/* <Chat /> */}
 
       {/* <TrendingChart/> */}
-      {/* <Analysis /> */}
+      <Analysis />
     </div>
   );
 }

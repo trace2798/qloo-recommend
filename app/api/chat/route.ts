@@ -375,6 +375,24 @@ export async function POST(req: Request) {
   //     { status: 400, headers: { "Content-Type": "application/json" } }
   //   );
   // }
+  // const lookupResult = await searchQloo({
+  //   title: intent.title,
+  //   entityType: intent.type,
+  // });
+  // console.log("LOOKUP", lookupResult);
+  // if (!lookupResult) {
+  //   return new Response(JSON.stringify({ error: "No entity found" }), {
+  //     status: 404,
+  //     headers: { "Content-Type": "application/json" },
+  //   });
+  // }
+  // const recs = await fetchRecommendations({
+  //   entityId: lookupResult.entityId,
+  //   entityType: intent.type,
+  //   take: 5,
+  // });
+  // console.log("REC", recs);
+  //  const recsJson = JSON.stringify(recs, null, 2);
   let intents: Intent[];
   try {
     const parsed = JSON.parse(intentText);
@@ -396,25 +414,6 @@ export async function POST(req: Request) {
     });
   }
 
-  // const lookupResult = await searchQloo({
-  //   title: intent.title,
-  //   entityType: intent.type,
-  // });
-  // console.log("LOOKUP", lookupResult);
-  // if (!lookupResult) {
-  //   return new Response(JSON.stringify({ error: "No entity found" }), {
-  //     status: 404,
-  //     headers: { "Content-Type": "application/json" },
-  //   });
-  // }
-
-  // const recs = await fetchRecommendations({
-  //   entityId: lookupResult.entityId,
-  //   entityType: intent.type,
-  //   take: 5,
-  // });
-  // console.log("REC", recs);
-  //  const recsJson = JSON.stringify(recs, null, 2);
   const lookups = await Promise.all(
     intents.map(({ title, type }) => searchQloo({ title, entityType: type }))
   );
@@ -564,7 +563,7 @@ const fetchRecommendations = async ({
   }
 
   const data = await res.json();
-  console.log("REC DATA", data);
+  console.log("REC DATA", data.results);
   return slimDownEntities(data);
 };
 

@@ -16,7 +16,7 @@ const model = wrapLanguageModel({
 });
 
 const systemPrompt =
-  "You are DataInsightGPT, an expert analyst for interpreting demographic affinity data across age and gender segments.\n" +
+  "You are an expert in Data Analysis, as an expert analyst for interpreting demographic affinity data across age and gender segments.\n" +
   "When you receive a user message containing exactly one JSON object with these keys—and nothing else—produce a clear, structured text analysis:\n" +
   "\n" +
   "JSON schema:\n" +
@@ -51,7 +51,7 @@ const systemPrompt =
   "\n" +
   "**Formatting rules**:\n" +
   "- Use exact percentages with one decimal place (e.g. “–4.0%”, “+20.0%”).  \n" +
-  "- Write in professional, concise bullet form.  \n" +
+  "- Write in professional, paragraph form.  \n" +
   "- Do not add any additional keys, commentary, or prose outside the specified structure.  \n" +
   "- Only describe what’s in the JSON—do not hallucinate or infer beyond the provided data.\n";
 
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   console.log("LATEST:", latest.parts);
 
   const response = streamText({
-    model,
+    model: openrouter("meta-llama/llama-4-maverick"),
     system: systemPrompt,
     messages: convertToModelMessages([latest]),
   });
