@@ -8,7 +8,7 @@ const ENTITY_TYPES = {
   artist: "urn:entity:artist",
   brand: "urn:entity:brand",
   podcast: "urn:entity:podcast",
-  tvShow: "urn:entity:tvshow",
+  tvShow: "urn:entity:tv_show",
   game: "urn:entity:videogame",
   destination: "urn:entity:destination",
   person: "urn:entity:person",
@@ -140,3 +140,76 @@ export async function getTasteData({ entityId }: { entityId: string }) {
   console.log("Taste ANalysis", json.results.tags);
   return json.results.tags;
 }
+
+export async function fetchRecommendation({
+  entityId,
+  entityType,
+  take = 10,
+}: {
+  entityId: string;
+  entityType: EntityType;
+  take?: number;
+}): Promise<any> {
+  const urn = ENTITY_TYPES[entityType];
+
+  const params = new URLSearchParams({
+    "filter.type": urn,
+    "signal.interests.entities": entityId,
+    take: take.toString(),
+  });
+
+  const url = `${process.env.QLOO_BASE_URL}/v2/insights?${params.toString()}`;
+
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": process.env.QLOO_API_KEY!,
+    },
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("Qloo recommendations error:", errText);
+    return [];
+  }
+
+  const data = await res.json();
+  console.log("REC DATA", data.results);
+  return data.results.entities;
+}
+// const fetchRecommendations = async ({
+//   entityId,
+//   entityType,
+//   take = 5,
+// }: {
+//   entityId: string;
+//   entityType: EntityType;
+//   take?: number;
+// }): Promise<SlimMovie[]> => {
+//   const urn = ENTITY_TYPES[entityType];
+
+//   const params = new URLSearchParams({
+//     "filter.type": urn,
+//     "signal.interests.entities": entityId,
+//     take: take.toString(),
+//   });
+
+//   const url = `${process.env.QLOO_BASE_URL}/v2/insights?${params.toString()}`;
+
+//   const res = await fetch(url, {
+//     headers: {
+//       "Content-Type": "application/json",
+//       "X-Api-Key": process.env.QLOO_API_KEY!,
+//     },
+//   });
+//   if (!res.ok) {
+//     const errText = await res.text();
+//     console.error("Qloo recommendations error:", errText);
+//     return [];
+//   }
+
+//   const data = await res.json();
+//   console.log("REC DATA", data.results);
+//   return slimDownEntities(data);
+// };
+
+// Trending API error: {"errors":[{"message":"filter.type must be one of urn:entity:actor, urn:entity:artist, urn:entity:brand, urn:entity:movie, urn:entity:person, urn:entity:podcast, urn:entity:tv_show","path":"filter.type"}]}

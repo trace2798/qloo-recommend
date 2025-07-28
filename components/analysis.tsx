@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  fetchRecommendation,
   getDemographicData,
   getTasteData,
   getTrendingData,
@@ -39,6 +40,7 @@ import {
 import { Markdown } from "./markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, parseISO, subWeeks } from "date-fns";
+import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 const ENTITY_TYPES = {
   movie: "urn:entity:movie",
@@ -46,7 +48,7 @@ const ENTITY_TYPES = {
   artist: "urn:entity:artist",
   brand: "urn:entity:brand",
   podcast: "urn:entity:podcast",
-  tvShow: "urn:entity:tvshow",
+  tvShow: "urn:entity:tv_show",
   game: "urn:entity:videogame",
   destination: "urn:entity:destination",
   person: "urn:entity:person",
@@ -77,6 +79,7 @@ export function Analysis() {
   const [tasteData, setTasteData] = useState<any[]>([]);
   const [trendingData, setTrendingData] = useState<TrendingItem[]>([]);
   const [trendPeriod, setTrendPeriod] = useState<PeriodKey>("month");
+  const [similarData, setSimilarData] = useState([]);
   const [loading, setLoading] = useState(false);
   const endDate = new Date();
   const startDate = subWeeks(endDate, 24);
@@ -94,24 +97,7 @@ export function Analysis() {
       headers: { "Custom-Header": "value" },
     }),
   });
-  const chartConfig: ChartConfig = {
-    population_percentile: {
-      label: "Popularity Percentile",
-      color: "var(--chart-1)",
-    },
-    population_rank_velocity: {
-      label: "Rank Velocity",
-      color: "var(--chart-2)",
-    },
-    velocity_fold_change: {
-      label: "Velocity Fold Change",
-      color: "var(--chart-3)",
-    },
-    population_percent_delta: {
-      label: "Percentile Δ",
-      color: "var(--chart-4)",
-    },
-  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -138,16 +124,22 @@ export function Analysis() {
           parseISO(a.date).getTime() - parseISO(b.date).getTime()
       );
       setTrendingData(sortedTrending);
-      sendMessage({
-        text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
-          demoAnalysisData
-        )}.`,
+      // sendMessage({
+      //   text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
+      //     demoAnalysisData
+      //   )}.`,
+      // });
+      // tagsMessage({
+      //   text: `entityName: ${title} and entityType: ${type}. Here is the tags from the insight endpoint is: ${JSON.stringify(
+      //     tasteAnalysisData
+      //   )}.`,
+      // });
+
+      const rec = await fetchRecommendation({
+        entityId: searchRes?.entityId!,
+        entityType: type,
       });
-      tagsMessage({
-        text: `entityName: ${title} and entityType: ${type}. Here is the tags from the insight endpoint is: ${JSON.stringify(
-          tasteAnalysisData
-        )}.`,
-      });
+      setSimilarData(rec);
     } catch (err) {
       console.error(err);
     } finally {
@@ -210,6 +202,7 @@ export function Analysis() {
             <TabsTrigger value="demo">Demographic</TabsTrigger>
             <TabsTrigger value="taste">Taste</TabsTrigger>
             <TabsTrigger value="trend">Trend</TabsTrigger>
+            <TabsTrigger value="similar">Similar</TabsTrigger>
           </TabsList>
           <TabsContent value="demo" className="flex justify-center w-full">
             <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
@@ -347,7 +340,6 @@ export function Analysis() {
 
                   {(Object.entries(PERIODS) as Array<[PeriodKey, number]>).map(
                     ([key, weeks]) => {
-                      // slice off the last `weeks` elements:
                       const sliceStart = Math.max(
                         trendingData.length - weeks,
                         0
@@ -368,6 +360,30 @@ export function Analysis() {
                 </Tabs>
               </>
             )}
+          </TabsContent>
+          <TabsContent
+            value="similar"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
+          >
+            {similarData.map((data, index) => (
+              <Card className="border size-[320px] p-0">
+                <img
+                  src={data.properties.image.url}
+                  className="overflow-hidden w-full h-[200px] object-cover"
+                />
+                <CardHeader className="p-3">
+                  <CardTitle>{data.name}</CardTitle>
+                  <CardDescription>
+                    {type === "brand"
+                      ? data.properties.short_description
+                      : ["movie", "tv_show", "game"].includes(type)
+                      ? data.properties.description
+                      : null}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+            <pre>{JSON.stringify(similarData, null, 2)}</pre>
           </TabsContent>
         </Tabs>
       </div>
