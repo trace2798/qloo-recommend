@@ -291,7 +291,7 @@ const ENTITY_TYPES = {
   artist: "urn:entity:artist",
   brand: "urn:entity:brand",
   podcast: "urn:entity:podcast",
-  tvShow: "urn:entity:tvshow",
+  tvShow: "urn:entity:tv_show",
   game: "urn:entity:videogame",
   destination: "urn:entity:destination",
   person: "urn:entity:person",
@@ -487,3 +487,249 @@ const fetchRecommendations = async ({
   return slimDownEntities(data);
 };
 
+// import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+// import {
+//   convertToModelMessages,
+//   extractReasoningMiddleware,
+//   generateText,
+//   streamText,
+//   UIMessage,
+//   wrapLanguageModel,
+//   generateObject,
+// } from "ai";
+
+// import { z } from "zod";
+
+// // Entity type definitions
+// const ENTITY_TYPES = {
+//   movie: "urn:entity:movie",
+//   book: "urn:entity:book",
+//   artist: "urn:entity:artist",
+//   brand: "urn:entity:brand",
+//   podcast: "urn:entity:podcast",
+//   tvShow: "urn:entity:tvshow",
+//   game: "urn:entity:videogame",
+//   destination: "urn:entity:destination",
+//   person: "urn:entity:person",
+//   place: "urn:entity:place",
+// } as const;
+// type EntityType = keyof typeof ENTITY_TYPES;
+
+// // Initialize OpenRouter
+// const openrouter = createOpenRouter({
+//   apiKey: process.env.OPENROUTER_API_KEY!,
+// });
+
+// // ====================
+// // Worker Agents
+// // ====================
+
+// /**
+//  * Intent Parser Worker
+//  * Extracts entity title and type from user message
+//  */
+// async function intentParserWorker(userInput: string) {
+//   const { object } = await generateObject({
+//     model: openrouter("meta-llama/llama-3.3-70b-instruct"),
+//     schema: z.object({
+//       title: z.string(),
+//       type: z.enum(Object.keys(ENTITY_TYPES) as [EntityType, ...EntityType[]]),
+//     }),
+//     system:
+//       "Parse user intent into title and entity type. Return empty strings if unclear.",
+//     prompt: userInput,
+//   });
+
+//   return object;
+// }
+
+// /**
+//  * Qloo Search Worker
+//  * Finds entity ID from Qloo API
+//  */
+// async function qlooSearchWorker(title: string, entityType: EntityType) {
+//   const urn = ENTITY_TYPES[entityType];
+//   const url = `${process.env.QLOO_BASE_URL}/search?query=${encodeURIComponent(
+//     title
+//   )}&types=${encodeURIComponent(urn)}&take=2`;
+
+//   const res = await fetch(url, {
+//     headers: {
+//       "Content-Type": "application/json",
+//       "X-Api-Key": process.env.QLOO_API_KEY!,
+//     },
+//   });
+
+//   const json = await res.json();
+//   console.log("SEARCH", json);
+//   const firstResult = Array.isArray(json.results) ? json.results[0] : null;
+
+//   return firstResult
+//     ? {
+//         entityId: String(firstResult.entity_id),
+//         name: firstResult.name,
+//       }
+//     : null;
+// }
+
+// /**
+//  * Recommendations Worker
+//  * Fetches recommendations from Qloo API
+//  */
+// async function recommendationsWorker(entityId: string, entityType: EntityType) {
+//   const urn = ENTITY_TYPES[entityType];
+//   const params = new URLSearchParams({
+//     "filter.type": urn,
+//     "signal.interests.entities": entityId,
+//     take: "5",
+//   });
+
+//   const url = `${process.env.QLOO_BASE_URL}/v2/insights?${params.toString()}`;
+//   const res = await fetch(url, {
+//     headers: {
+//       "Content-Type": "application/json",
+//       "X-Api-Key": process.env.QLOO_API_KEY!,
+//     },
+//   });
+
+//   if (!res.ok) {
+//     const errText = await res.text();
+//     console.error("Qloo recommendations error:", errText);
+//     return [];
+//   }
+
+//   const data = await res.json();
+//    console.log("REC DATA", data);
+//   return slimDownEntities(data);
+// }
+
+// /**
+//  * Response Generator Worker
+//  * Creates streaming response with recommendations
+//  */
+// function responseGeneratorWorker(recs: SlimMovie[], userInput: string) {
+//   const recsJson = JSON.stringify(recs, null, 2);
+//   return streamText({
+//     model: openrouter("meta-llama/llama-4-maverick"),
+//     system: `You're an AI recommender. Use ONLY these Qloo recommendations: ${recsJson}. 
+//              Format response with: 
+//              1. Introduction mentioning the requested item
+//              2. Bullet-point list of recommendations with ratings
+//              3. Short description for each`,
+//     prompt: userInput,
+//   });
+// }
+
+// /**
+//  * Error Handler Worker
+//  * Generates fallback response when main flow fails
+//  */
+// function errorHandlerWorker(error: Error, userInput: string) {
+//   return streamText({
+//     model: openrouter("meta-llama/llama-4-maverick"),
+//     system: "Apologize and explain you couldn't complete the request",
+//     prompt: `Error: ${error.message}. User query: ${userInput}`,
+//   });
+// }
+
+// // ====================
+// // Orchestrator Agent
+// // ====================
+// async function orchestratorAgent(userInput: string) {
+//   try {
+//     // Step 1: Parse user intent
+//     const intent = await intentParserWorker(userInput);
+//     if (!intent.title || !intent.type) {
+//       throw new Error("Couldn't identify what you're looking for");
+//     }
+
+//     // Step 2: Search for entity
+//     const entity = await qlooSearchWorker(intent.title, intent.type);
+//     if (!entity) {
+//       throw new Error(`Couldn't find "${intent.title}" in our database`);
+//     }
+
+//     // Step 3: Get recommendations
+//     const recs = await recommendationsWorker(entity.entityId, intent.type);
+//     if (recs.length === 0) {
+//       throw new Error("No recommendations available for this item");
+//     }
+
+//     // Step 4: Generate response
+//     return responseGeneratorWorker(recs, userInput);
+//   } catch (error) {
+//     // Handle errors gracefully
+//     return errorHandlerWorker(error as Error, userInput);
+//   }
+// }
+
+// // ====================
+// // Helper Functions
+// // ====================
+// interface SlimMovie {
+//   name: string;
+//   releaseYear?: number;
+//   releaseDate?: string;
+//   description?: string;
+//   contentRating?: string;
+//   duration?: number;
+//   ratings?: {
+//     rottenTomatoes?: { critic: number; user: number };
+//     imdb?: { rating: number; votes: number };
+//   };
+// }
+
+// function slimDownEntities(raw: any): SlimMovie[] {
+//   if (!raw?.results?.entities) return [];
+
+//   return raw.results.entities.map((ent: any) => {
+//     const p = ent.properties || {};
+//     const ext = ent.external || {};
+//     const rt = ext.rottentomatoes?.[0];
+//     const im = ext.imdb?.[0];
+
+//     return {
+//       name: ent.name,
+//       releaseYear: p.release_year,
+//       releaseDate: p.release_date,
+//       description: p.description,
+//       contentRating: p.content_rating,
+//       duration: p.duration,
+//       ratings: {
+//         rottenTomatoes: rt
+//           ? {
+//               critic: Number(rt.critic_rating),
+//               user: Number(rt.user_rating),
+//             }
+//           : undefined,
+//         imdb: im
+//           ? {
+//               rating: im.user_rating,
+//               votes: im.user_rating_count,
+//             }
+//           : undefined,
+//       },
+//     };
+//   });
+// }
+
+// // ====================
+// // API Endpoint
+// // ====================
+// export async function POST(req: Request) {
+//   const { messages }: { messages: UIMessage[] } = await req.json();
+//   const latest = messages[messages.length - 1];
+//   console.log("LATEST", latest);
+//   const userText =
+//     latest?.parts
+//       .filter((p) => p.type === "text")
+//       .map((p: any) => p.text)
+//       .join("")
+//       .trim() || "";
+
+//   // Execute orchestration
+//   const responseStream = await orchestratorAgent(userText);
+
+//   // Return streaming response
+//   return responseStream.toUIMessageStreamResponse();
+// }

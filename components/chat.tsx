@@ -2,6 +2,8 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState } from 'react';
+import { Markdown } from './markdown';
+import { sanitizeText } from '@/lib/utils';
 
 export default function Chat() {
   const [input, setInput] = useState('');
@@ -14,7 +16,7 @@ export default function Chat() {
           {message.parts.map((part, i) => {
             switch (part.type) {
               case 'text':
-                return <div key={`${message.id}-${i}`}>{part.text}</div>;
+                return <Markdown>{sanitizeText(part.text)}</Markdown>
             }
           })}
         </div>
