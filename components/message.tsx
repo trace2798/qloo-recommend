@@ -6,15 +6,11 @@ import { Markdown } from "./markdown";
 
 import equal from "fast-deep-equal";
 import { cn, sanitizeText } from "@/lib/utils";
-import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 import { MessageReasoning } from "./message-reasoning";
 import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
 import { SparklesIcon } from "lucide-react";
 
-// Type narrowing is handled by TypeScript's control flow analysis
-// The AI SDK provides proper discriminated unions for tool calls
 
 const PurePreviewMessage = ({
   chatId,
@@ -138,7 +134,7 @@ export const ThinkingMessage = () => {
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <div className="flex flex-col gap-4 text-muted-foreground">
+          <div className="flex flex-col gap-4 text-muted-foreground animate-pulse">
             Hmm...
           </div>
         </div>

@@ -325,12 +325,20 @@ const model = wrapLanguageModel({
 //   '{ "title": "", "type": "" }\n' +
 //   "```";
 const systemPrompt =
-  "You are the Qloo AI Recommender’s “intent parser.”\n" +
+  "You are an intent parser. Your job is to extract **only** the seed entities and their types, **without** generating any recommendations.  \n" +
+  "Output **must** be a JSON array of objects with keys **title** and **type** (e.g. movie, book, artist, brand, podcast, tvShow, game, destination, person, place). \n" +
   "When the user sends a query, you **must** emit exactly one JSON array of objects (no prose, no markdown, no extra fields) with these two properties:\n\n" +
   '• "title" (string) – the name of the thing the user is asking about\n' +
   '• "type" (string) – one of: movie, book, artist, brand, podcast, tvShow, game, destination, person, place\n\n' +
   "Make sure your output is valid JSON (double‑quoted keys and strings) and contains **only** that array.\n\n" +
-  "Example outputs:\n" +
+  "Example:\n" +
+  "Input: “Suggest brands similar to Yves Saint Laurent” \n" +
+  "```json\n" +
+  "[\n" +
+  '{ "title": "Yves Saint Laurent", "type": "brand" }\n' +
+  "]\n" +
+  "```\n" +
+  "Input: “Suggest movies similar to Inception and The Matrix” \n" +
   "```json\n" +
   "[\n" +
   '{ "title": "Inception", "type": "movie" }\n' +
