@@ -52,6 +52,7 @@ const ENTITY_TYPES = {
   person: "urn:entity:person",
   place: "urn:entity:place",
 } as const;
+
 type EntityType = keyof typeof ENTITY_TYPES;
 type TrendingItem = {
   date: string;
@@ -61,12 +62,21 @@ type TrendingItem = {
   population_percent_delta: number;
 };
 
+const PERIODS = {
+  month: 4,
+  quarterly: 12,
+  halfYear: 24,
+  annual: 50,
+} as const;
+type PeriodKey = keyof typeof PERIODS;
+
 export function Analysis() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<EntityType>("movie");
   const [data, setData] = useState<any[]>([]);
   const [tasteData, setTasteData] = useState<any[]>([]);
   const [trendingData, setTrendingData] = useState<TrendingItem[]>([]);
+  const [trendPeriod, setTrendPeriod] = useState<PeriodKey>("month");
   const [loading, setLoading] = useState(false);
   const endDate = new Date();
   const startDate = subWeeks(endDate, 24);
@@ -252,7 +262,7 @@ export function Analysis() {
             </div>
           </TabsContent>
 
-          <TabsContent value="trend" className="flex justify-center w-full">
+          {/* <TabsContent value="trend" className="flex justify-center w-full">
             <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
               <div>
                 {trendingData.length > 0 && (
@@ -317,6 +327,47 @@ export function Analysis() {
                 )}
               </div>
             </div>
+          </TabsContent> */}
+          <TabsContent value="trend" className="space-y-6">
+            {trendingData.length > 0 && (
+              <>
+                <Tabs
+                  defaultValue={trendPeriod}
+                  onValueChange={(val: string) =>
+                    setTrendPeriod(val as PeriodKey)
+                  }
+                  className="mb-4"
+                >
+                  <TabsList>
+                    <TabsTrigger value="month">1 Month</TabsTrigger>
+                    <TabsTrigger value="quarterly">3 Months</TabsTrigger>
+                    <TabsTrigger value="halfYear">6 Months</TabsTrigger>
+                    <TabsTrigger value="annual">12 Months</TabsTrigger>
+                  </TabsList>
+
+                  {(Object.entries(PERIODS) as Array<[PeriodKey, number]>).map(
+                    ([key, weeks]) => {
+                      // slice off the last `weeks` elements:
+                      const sliceStart = Math.max(
+                        trendingData.length - weeks,
+                        0
+                      );
+                      const periodData = trendingData.slice(sliceStart);
+
+                      return (
+                        <TabsContent
+                          key={key}
+                          value={key}
+                          className="space-y-6"
+                        >
+                          <TrendingCharts data={periodData} />
+                        </TabsContent>
+                      );
+                    }
+                  )}
+                </Tabs>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -400,4 +451,50 @@ function DemographicsChart({ data }: { data: DemoData[] }) {
   );
 }
 
-function TrendingCharts({ data }: { data: any[] }) {}
+function TrendingCharts({ data }: { data: TrendingItem[] }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {(
+        [
+          "population_percentile",
+          "population_rank_velocity",
+          "velocity_fold_change",
+          "population_percent_delta",
+        ] as Array<keyof typeof trendConfig>
+      ).map((key) => (
+        <figure key={key} className="space-y-2">
+          <ChartContainer config={trendConfig} className="h-72 w-full">
+            <LineChart
+              data={data}
+              margin={{ top: 20, right: 20, bottom: 5, left: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={(d: string) => format(parseISO(d), "MMM dd")}
+              />
+              <YAxis />
+              <Tooltip
+                content={
+                  <ChartTooltipContent
+                    nameKey={key}
+                    labelFormatter={(d: string) => format(parseISO(d), "PPP")}
+                  />
+                }
+              />
+              <Line
+                type="monotone"
+                dataKey={key}
+                stroke={trendConfig[key].color}
+                dot={{ r: 3 }}
+              />
+            </LineChart>
+          </ChartContainer>
+          <figcaption className="text-center text-sm text-gray-600">
+            {trendConfig[key].label} Over Time
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  );
+}
