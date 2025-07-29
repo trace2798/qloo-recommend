@@ -101,11 +101,11 @@ export default function Home() {
     //   </footer>
     // </div>
     <div>
-      {/* <Chat/> */}
+      <Chat/>
       {/* <Chat /> */}
 
       {/* <TrendingChart/> */}
-      <Analysis />
+      {/* <Analysis /> */}
     </div>
   );
 }
