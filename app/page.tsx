@@ -48,6 +48,7 @@ export default function Home() {
   return (
     <>
       <Navbar />
+      <div className="absolute top-0 left-0 w-full h-full -z-5 bg-black/30" />
       <div className="absolute top-0 left-0 w-full h-full -z-10">
         <img src="/home.jpg" className="w-full h-full object-cover blur-lg" />
       </div>
