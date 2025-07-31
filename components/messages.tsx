@@ -1,13 +1,9 @@
 
 import { Greeting } from './greetings';
 import { memo } from 'react';
-
 import equal from 'fast-deep-equal';
 import type { UIMessage, UseChatHelpers } from '@ai-sdk/react';
 import { motion } from 'framer-motion';
-
-// import type { ChatMessage } from '@/lib/types';
-// import { useDataStream } from './data-stream-provider';
 import { PreviewMessage, ThinkingMessage } from './message';
 import { useMessages } from '@/hooks/use-messages';
 

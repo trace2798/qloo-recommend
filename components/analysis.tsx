@@ -112,6 +112,11 @@ export function Analysis() {
         entityId: searchRes?.entityId!,
       });
       console.log("Tags", tasteAnalysisData);
+      const rec = await fetchRecommendation({
+        entityId: searchRes?.entityId!,
+        entityType: type,
+      });
+      setSimilarData(rec);
       const trending = await getTrendingData({
         entityId: searchRes?.entityId!,
         entityType: type,
@@ -134,12 +139,6 @@ export function Analysis() {
       //     tasteAnalysisData
       //   )}.`,
       // });
-
-      const rec = await fetchRecommendation({
-        entityId: searchRes?.entityId!,
-        entityType: type,
-      });
-      setSimilarData(rec);
     } catch (err) {
       console.error(err);
     } finally {
@@ -366,22 +365,34 @@ export function Analysis() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
           >
             {similarData.map((data, index) => (
-              <Card className="border size-[320px] p-0">
-                <img
-                  src={data.properties.image.url}
-                  className="overflow-hidden w-full h-[200px] object-cover"
-                />
-                <CardHeader className="p-3">
-                  <CardTitle>{data.name}</CardTitle>
-                  <CardDescription>
-                    {type === "brand"
-                      ? data.properties.short_description
-                      : ["movie", "tv_show", "game"].includes(type)
-                      ? data.properties.description
-                      : null}
-                  </CardDescription>
-                </CardHeader>
+              <Card className="flex h-full flex-col overflow-hidden p-0 shadow-sm transition-shadow hover:shadow-md">
+                <div className="relative h-40 overflow-hidden sm:h-48 md:h-52">
+                  <img
+                    src={data.properties.image.url}
+                    alt={`Poster for ${data.name}`}
+                    className="object-cover transition-transform duration-300 hover:scale-105"
+                  />
+                </div>
               </Card>
+              // <Card className="relative p-0">
+              //   <div className="absolute">
+              //     <img
+              //       src={data.properties.image.url}
+              //       className="relative w-[150px] h-[200px]overflow-hidden  object-cover"
+              //     />
+              //   </div>
+
+              //   <CardHeader className="p-3">
+              //     <CardTitle>{data.name}</CardTitle>
+              //     <CardDescription>
+              //       {type === "brand"
+              //         ? data.properties.short_description
+              //         : ["movie", "tv_show", "game"].includes(type)
+              //         ? data.properties.description
+              //         : null}
+              //     </CardDescription>
+              //   </CardHeader>
+              // </Card>
             ))}
             <pre>{JSON.stringify(similarData, null, 2)}</pre>
           </TabsContent>

@@ -1,111 +1,135 @@
 import { Analysis } from "@/components/analysis";
 import { Chat } from "@/components/chat-container";
+import HeatmapMap from "@/components/heatmap";
 
-export default function Home() {
+export default async function Home() {
+  const res = await fetch(
+    "https://hackathon.api.qloo.com/v2/insights?filter.type=urn%3Aheatmap&filter.location=POINT(-96.808891%2032.779167)&filter.tags=urn%3Atag%3Aoccupation%3Awikidata%3Adata_scientist&signal.demographics.audiences=urn%3Aaudience%3Alife_stage%3Aretirement",
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": process.env.QLOO_API_KEY!,
+      },
+      cache: "no-store",
+    }
+  );
+  if (!res.ok) {
+    throw new Error("Failed to load heatmap data");
+  }
+  const json = (await res.json()) as {
+    success: boolean;
+    results: {
+      heatmap: Array<{
+        location: { latitude: number; longitude: number };
+        query: { affinity: number };
+      }>;
+    };
+  };
+
+  // 2. pull out the array
+  const heatmapData = json.results.heatmap;
+
   return (
-    // <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-    //   <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-    //     <Image
-    //       className="dark:invert"
-    //       src="/next.svg"
-    //       alt="Next.js logo"
-    //       width={180}
-    //       height={38}
-    //       priority
-    //     />
-    //     <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-    //       <li className="mb-2 tracking-[-.01em]">
-    //         Get started by editing{" "}
-    //         <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-    //           app/page.tsx
-    //         </code>
-    //         .
-    //       </li>
-    //       <li className="tracking-[-.01em]">
-    //         Save and see your changes instantly.
-    //       </li>
-    //     </ol>
-
-    //     <div className="flex gap-4 items-center flex-col sm:flex-row">
-    //       <a
-    //         className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-    //         href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-    //         target="_blank"
-    //         rel="noopener noreferrer"
-    //       >
-    //         <Image
-    //           className="dark:invert"
-    //           src="/vercel.svg"
-    //           alt="Vercel logomark"
-    //           width={20}
-    //           height={20}
-    //         />
-    //         Deploy now
-    //       </a>
-    //       <a
-    //         className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-    //         href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-    //         target="_blank"
-    //         rel="noopener noreferrer"
-    //       >
-    //         Read our docs
-    //       </a>
-    //     </div>
-    //   </main>
-    //   <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-    //     <a
-    //       className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-    //       href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-    //       target="_blank"
-    //       rel="noopener noreferrer"
-    //     >
-    //       <Image
-    //         aria-hidden
-    //         src="/file.svg"
-    //         alt="File icon"
-    //         width={16}
-    //         height={16}
-    //       />
-    //       Learn
-    //     </a>
-    //     <a
-    //       className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-    //       href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-    //       target="_blank"
-    //       rel="noopener noreferrer"
-    //     >
-    //       <Image
-    //         aria-hidden
-    //         src="/window.svg"
-    //         alt="Window icon"
-    //         width={16}
-    //         height={16}
-    //       />
-    //       Examples
-    //     </a>
-    //     <a
-    //       className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-    //       href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-    //       target="_blank"
-    //       rel="noopener noreferrer"
-    //     >
-    //       <Image
-    //         aria-hidden
-    //         src="/globe.svg"
-    //         alt="Globe icon"
-    //         width={16}
-    //         height={16}
-    //       />
-    //       Go to nextjs.org →
-    //     </a>
-    //   </footer>
-    // </div>
     <div>
       <Chat/>
       {/* <Chat /> */}
 
       {/* <TrendingChart/> */}
       {/* <Analysis /> */}
+       {/* <HeatmapMap data={heatmapData} /> */}
     </div>
   );
 }
+
+const heatmapData = {
+  success: true,
+  results: {
+    heatmap: [
+      {
+        location: {
+          latitude: 32.77565,
+          longitude: -96.80672,
+          geohash: "9vg4mne",
+        },
+        query: {
+          affinity: 1,
+          affinity_rank: 0.9361111111111111,
+          popularity: 0,
+        },
+      },
+      {
+        location: {
+          latitude: 32.790756,
+          longitude: -96.79573,
+          geohash: "9vg4t37",
+        },
+        query: {
+          affinity: 0.9977678571428571,
+          affinity_rank: 0.9343835825085987,
+          popularity: 0.6830357142857143,
+        },
+      },
+      {
+        location: {
+          latitude: 32.778397,
+          longitude: -96.80397,
+          geohash: "9vg4mpj",
+        },
+        query: {
+          affinity: 0.9955357142857143,
+          affinity_rank: 0.9276837095404948,
+          popularity: 0.8973214285714286,
+        },
+      },
+      {
+        location: {
+          latitude: 32.777023,
+          longitude: -96.797104,
+          geohash: "9vg4mqf",
+        },
+        query: {
+          affinity: 0.9933035714285714,
+          affinity_rank: 0.9175120506718124,
+          popularity: 1,
+        },
+      },
+      {
+        location: {
+          latitude: 32.774277,
+          longitude: -96.8026,
+          geohash: "9vg4mnq",
+        },
+        query: {
+          affinity: 0.9910714285714286,
+          affinity_rank: 0.8950252237123655,
+          popularity: 0.7299107142857143,
+        },
+      },
+      {
+        location: {
+          latitude: 32.768784,
+          longitude: -96.797104,
+          geohash: "9vg4mm6",
+        },
+        query: {
+          affinity: 0.9888392857142857,
+          affinity_rank: 0.8948551849670753,
+          popularity: 0.9508928571428571,
+        },
+      },
+      {
+        location: {
+          latitude: 32.782516,
+          longitude: -96.79161,
+          geohash: "9vg4mry",
+        },
+        query: {
+          affinity: 0.9866071428571429,
+          affinity_rank: 0.8921268716792787,
+          popularity: 0.7209821428571429,
+        },
+      },
+    ],
+  },
+  duration: 20,
+};
