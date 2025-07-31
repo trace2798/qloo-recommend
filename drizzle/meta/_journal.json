@@ -8,6 +8,20 @@
       "when": 1753977762055,
       "tag": "0000_breezy_turbo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1753992475553,
+      "tag": "0001_superb_the_spike",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1753992532264,
+      "tag": "0002_slippery_stone_men",
+      "breakpoints": true
     }
   ]
 }

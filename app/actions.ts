@@ -1,5 +1,7 @@
 "use server";
 
+import { db } from "@/db";
+import { message } from "@/db/schema";
 import { format } from "date-fns";
 
 const ENTITY_TYPES = {
@@ -177,7 +179,24 @@ export async function fetchRecommendation({
   return data.results.entities;
 }
 
-
+export const saveMessage = async (
+  parts: { content: string }[],
+  role: string,
+  userId: string
+) => {
+  const response = await db
+    .insert(message)
+    .values({
+      parts: parts,
+      role: role,
+      userId: userId,
+    })
+    .returning({ id: message.id });
+  return {
+    id: response[0].id,
+    status: 200,
+  };
+};
 // const fetchRecommendations = async ({
 //   entityId,
 //   entityType,

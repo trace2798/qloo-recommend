@@ -1,17 +1,15 @@
-import { Greeting } from "./greetings";
-import { memo } from "react";
-import equal from "fast-deep-equal";
-import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
-import { motion } from "framer-motion";
-import { PreviewMessage, ThinkingMessage } from "./message";
 import { useMessages } from "@/hooks/use-messages";
+import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
+import equal from "fast-deep-equal";
+import { motion } from "framer-motion";
+import { memo } from "react";
+import { PreviewMessage, ThinkingMessage } from "./message";
 
 interface MessagesProps {
   status: UseChatHelpers<UIMessage>["status"];
   messages: UIMessage[];
   setMessages: UseChatHelpers<UIMessage>["setMessages"];
   regenerate: UseChatHelpers<UIMessage>["regenerate"];
-
 }
 
 function PureMessages({ status, messages, setMessages }: MessagesProps) {
@@ -30,8 +28,6 @@ function PureMessages({ status, messages, setMessages }: MessagesProps) {
       ref={messagesContainerRef}
       className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4 relative"
     >
-      {/* {messages.length === 0 && <Greeting  />} */}
-
       {messages.map((message, index) => (
         <PreviewMessage
           key={message.id}

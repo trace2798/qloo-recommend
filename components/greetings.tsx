@@ -58,7 +58,7 @@ import { motion } from "framer-motion";
 
 const options = [
   "Recommend me a movie similar to Good Will Hunting.",
-  "Recommend me something like To Kill a Mockingbird to read.",
+  "Recommend me something like And The Mountain Echoed to read.",
   "Suggest me something like Breaking Bad.",
   "Suggest me something similar to Yves Saint Laurent.",
 ];

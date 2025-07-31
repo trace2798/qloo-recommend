@@ -1,10 +1,5 @@
 import { InferSelectModel, relations, sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  sqliteTable,
-  text
-} from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
   id: text("id")
@@ -78,37 +73,10 @@ export const verification = sqliteTable("verification", {
   ),
 });
 
-export const usersChatRelations = relations(user, ({ many }) => ({
-  chat: many(chat),
-}));
-
-export const chat = sqliteTable(
-  "chat",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    title: text("title").notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    type: text("type").notNull(),
-    createdAt: text("created_at")
-      .notNull()
-      .default(sql`(CURRENT_TIMESTAMP)`),
-    updatedAt: text("updated_at")
-      .notNull()
-      .default(sql`(CURRENT_TIMESTAMP)`),
-  },
-  (table) => [
-    index("idx_chat_user_id").on(table.userId),
-    index("idx_chat_type").on(table.type),
-  ]
-);
-
-export const chatMessageRelations = relations(chat, ({ many }) => ({
+export const userMessageRelations = relations(user, ({ many }) => ({
   message: many(message),
 }));
+
 export type DBMessage = InferSelectModel<typeof message>;
 
 export const message = sqliteTable(
@@ -117,9 +85,9 @@ export const message = sqliteTable(
     id: text("id")
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    chatId: text("chat_id")
+    userId: text("user_id")
       .notNull()
-      .references(() => chat.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
     role: text("role").notNull(),
     parts: text("parts", { mode: "json" })
       .notNull()
@@ -132,7 +100,6 @@ export const message = sqliteTable(
       .default(sql`(CURRENT_TIMESTAMP)`),
   },
   (table) => [
-    index("idx_message_chatid_createdat").on(table.chatId, table.createdAt),
+    index("idx_message_userid_createdat").on(table.userId, table.createdAt),
   ]
 );
-

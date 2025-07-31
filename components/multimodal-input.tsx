@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 
 function PureMultimodalInput({
-  chatId,
   input,
   setInput,
   status,
@@ -39,7 +38,6 @@ function PureMultimodalInput({
   sendMessage,
   className,
 }: {
-  chatId: string;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<UIMessage>["status"];
@@ -103,7 +101,7 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, "", `/chat/${chatId}`);
+    // window.history.replaceState({}, "", `/chat/${chatId}`);
 
     sendMessage({
       role: "user",
@@ -122,7 +120,7 @@ function PureMultimodalInput({
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [input, setInput, sendMessage, setLocalStorageInput, width, chatId]);
+  }, [input, setInput, sendMessage, setLocalStorageInput, width]);
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
 

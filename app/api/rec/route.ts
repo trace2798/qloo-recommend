@@ -1,10 +1,14 @@
+import { saveMessage } from "@/app/actions";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
   convertToModelMessages,
   extractReasoningMiddleware,
   generateText,
   streamText,
+  UIDataTypes,
   UIMessage,
+  UIMessagePart,
+  UITools,
   wrapLanguageModel,
 } from "ai";
 
@@ -33,7 +37,7 @@ const openrouter = createOpenRouter({
 const model = wrapLanguageModel({
   model: openrouter("meta-llama/llama-4-maverick"),
   // model: openrouter("z-ai/glm-4.5"),
-  //   model: openrouter("deepseek/deepseek-r1-distill-llama-70b"),
+  // model: openrouter("deepseek/deepseek-r1-distill-llama-70b"),
   middleware: extractReasoningMiddleware({ tagName: "reasoning" }),
 });
 
@@ -60,18 +64,33 @@ const systemPrompt =
   "```\n" +
   "If you can’t identify any title/type pairs, respond with an empty array: []";
 type Intent = { title: string; type: EntityType };
+interface TextPart {
+  type: "text";
+  text: string;
+}
 
+function isTextPart(p: UIMessagePart<UIDataTypes, UITools>): p is TextPart {
+  return p.type === "text";
+}
 export async function POST(req: Request) {
   const {
     id,
     messages,
+    userId,
   }: {
     id: string;
     messages: UIMessage[];
+    userId: string;
   } = await req.json();
   console.log("MESSAGE", messages);
+  console.log("USER ID FROM FE", userId);
   const latest = messages[messages.length - 1];
   console.log("LATET", latest);
+  const dbParts = latest.parts
+    .filter(isTextPart)
+    .map((p) => ({ content: p.text }));
+  await saveMessage(dbParts, latest.role, userId);
+
   const { text: intentText } = await generateText({
     model: openrouter("meta-llama/llama-3.3-70b-instruct"),
     system: systemPrompt,
