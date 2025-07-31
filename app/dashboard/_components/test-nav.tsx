@@ -6,17 +6,13 @@ import { MotionConfig, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = ["Dashboard", "Strength Training", "Diet", "Settings"];
+const TABS = ["Dashboard", "Rec", "Insight", "Places", "Settings"];
 
 function slugify(tab: string) {
   return tab.toLowerCase().replace(/\s+/g, "-");
 }
 
-export default function TestNav({
-  email,
-  imageUrl,
-  name,
-}: any) {
+export default function TestNav({ email, imageUrl, name }: any) {
   const pathname = usePathname() || "";
 
   const segments = pathname.split("/").filter(Boolean);
@@ -66,11 +62,7 @@ export default function TestNav({
             );
           })}
         </motion.ul>
-        <UserAccountNav
-          email={email}
-          name={name}
-          imageUrl={imageUrl}
-        />
+        <UserAccountNav email={email} name={name} imageUrl={imageUrl} />
       </MotionConfig>
     </div>
   );
