@@ -1,5 +1,4 @@
 "use client";
-
 import {
   fetchRecommendation,
   getDemographicData,
@@ -230,7 +229,7 @@ export function Analysis() {
             <TabsTrigger value="taste" className="hover:cursor-pointer">
               Taste
             </TabsTrigger>
-            <TabsTrigger value="trend" className="hover:cursor-pointer">
+            <TabsTrigger value="trend" className="hover:cursor-pointer" disabled={TRENDING_KEYS.includes(type)}>
               Trend
             </TabsTrigger>
             <TabsTrigger value="similar" className="hover:cursor-pointer">

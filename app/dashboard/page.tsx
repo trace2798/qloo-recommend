@@ -1,35 +1,9 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { db } from "@/db";
 
 import { auth } from "@/lib/auth";
-import { and, desc, eq } from "drizzle-orm";
-import {
-  Goal,
-  Mars,
-  PersonStanding,
-  RulerDimensionLine,
-  Venus,
-  Weight,
-} from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import AISuggestionCard from "./_components/ai-suggestion-card";
-import BodyMetrices from "./_components/body-metrices";
-import CalculateData from "./_components/calculate-data";
-import GenerateAISuggestions from "./_components/generate-ai-suggestion";
 
-interface UserInfo {
-  height: number;
-  age: number;
-  sex: string;
-  latestWeight: number;
-}
 
 const Page = async ({}) => {
   const session = await auth.api.getSession({
