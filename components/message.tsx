@@ -162,13 +162,11 @@ import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
 import { SparklesIcon } from "lucide-react";
 
 const PurePreviewMessage = ({
-  chatId,
   message,
   isLoading,
   setMessages,
   requiresScrollPadding,
 }: {
-  chatId: string;
   message: UIMessage;
   isLoading: boolean;
   setMessages: UseChatHelpers<UIMessage>["setMessages"];
@@ -182,13 +180,11 @@ const PurePreviewMessage = ({
   >;
   type TextPart = Extract<(typeof message.parts)[number], { type: "text" }>;
 
-  // combine all the reasoning into one block
   const reasoningText = (message.parts as ReasoningPart[])
     .filter((p) => p.type === "reasoning" && p.text.trim().length > 0)
     .map((p) => p.text)
     .join("\n");
 
-  // pull out just the text parts
   const textParts = (message.parts as TextPart[]).filter(
     (p) => p.type === "text" && typeof p.text === "string"
   );

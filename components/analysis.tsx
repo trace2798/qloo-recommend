@@ -229,7 +229,11 @@ export function Analysis() {
             <TabsTrigger value="taste" className="hover:cursor-pointer">
               Taste
             </TabsTrigger>
-            <TabsTrigger value="trend" className="hover:cursor-pointer" disabled={TRENDING_KEYS.includes(type)}>
+            <TabsTrigger
+              value="trend"
+              className="hover:cursor-pointer"
+              disabled={TRENDING_KEYS.includes(type)}
+            >
               Trend
             </TabsTrigger>
             <TabsTrigger value="similar" className="hover:cursor-pointer">
@@ -358,7 +362,6 @@ export function Analysis() {
                 </DialogContent>
               </Dialog>
             ))}
-            {/* <pre>{JSON.stringify(similarData, null, 2)}</pre> */}
           </TabsContent>
         </Tabs>
       </div>

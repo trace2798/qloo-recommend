@@ -25,8 +25,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
   ArrowUpIcon,
-  PaperclipIcon,
-  StopCircleIcon,
+  StopCircleIcon
 } from "lucide-react";
 
 function PureMultimodalInput({
@@ -45,7 +44,6 @@ function PureMultimodalInput({
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<UIMessage>["status"];
   stop: () => void;
-
   messages: Array<UIMessage>;
   setMessages: UseChatHelpers<UIMessage>["setMessages"];
   sendMessage: UseChatHelpers<UIMessage>["sendMessage"];
@@ -102,7 +100,6 @@ function PureMultimodalInput({
     adjustHeight();
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
@@ -126,33 +123,6 @@ function PureMultimodalInput({
       textareaRef.current?.focus();
     }
   }, [input, setInput, sendMessage, setLocalStorageInput, width, chatId]);
-
-  const uploadFile = async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch("/api/files/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
-        return {
-          url,
-          name: pathname,
-          contentType: contentType,
-        };
-      }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (error) {
-      toast.error("Failed to upload file, please try again!");
-    }
-  };
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
 
