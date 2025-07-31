@@ -53,7 +53,8 @@ const systemPrompt =
   "- Use exact percentages with one decimal place (e.g. “–4.0%”, “+20.0%”).  \n" +
   "- Write in professional, paragraph form.  \n" +
   "- Do not add any additional keys, commentary, or prose outside the specified structure.  \n" +
-  "- Only describe what’s in the JSON—do not hallucinate or infer beyond the provided data.\n";
+  "- Only describe what’s in the JSON—do not hallucinate or infer beyond the provided data.\n" +
+  "- Answer in Markdown only\n";
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();

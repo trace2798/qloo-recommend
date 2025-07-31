@@ -31,105 +31,10 @@ export default async function Home() {
 
   return (
     <div>
-      <Chat/>
-      {/* <Chat /> */}
-
+      {/* <Chat/> */}
       {/* <TrendingChart/> */}
-      {/* <Analysis /> */}
-       {/* <HeatmapMap data={heatmapData} /> */}
+      <Analysis />
+      {/* <HeatmapMap data={heatmapData} /> */}
     </div>
   );
 }
-
-const heatmapData = {
-  success: true,
-  results: {
-    heatmap: [
-      {
-        location: {
-          latitude: 32.77565,
-          longitude: -96.80672,
-          geohash: "9vg4mne",
-        },
-        query: {
-          affinity: 1,
-          affinity_rank: 0.9361111111111111,
-          popularity: 0,
-        },
-      },
-      {
-        location: {
-          latitude: 32.790756,
-          longitude: -96.79573,
-          geohash: "9vg4t37",
-        },
-        query: {
-          affinity: 0.9977678571428571,
-          affinity_rank: 0.9343835825085987,
-          popularity: 0.6830357142857143,
-        },
-      },
-      {
-        location: {
-          latitude: 32.778397,
-          longitude: -96.80397,
-          geohash: "9vg4mpj",
-        },
-        query: {
-          affinity: 0.9955357142857143,
-          affinity_rank: 0.9276837095404948,
-          popularity: 0.8973214285714286,
-        },
-      },
-      {
-        location: {
-          latitude: 32.777023,
-          longitude: -96.797104,
-          geohash: "9vg4mqf",
-        },
-        query: {
-          affinity: 0.9933035714285714,
-          affinity_rank: 0.9175120506718124,
-          popularity: 1,
-        },
-      },
-      {
-        location: {
-          latitude: 32.774277,
-          longitude: -96.8026,
-          geohash: "9vg4mnq",
-        },
-        query: {
-          affinity: 0.9910714285714286,
-          affinity_rank: 0.8950252237123655,
-          popularity: 0.7299107142857143,
-        },
-      },
-      {
-        location: {
-          latitude: 32.768784,
-          longitude: -96.797104,
-          geohash: "9vg4mm6",
-        },
-        query: {
-          affinity: 0.9888392857142857,
-          affinity_rank: 0.8948551849670753,
-          popularity: 0.9508928571428571,
-        },
-      },
-      {
-        location: {
-          latitude: 32.782516,
-          longitude: -96.79161,
-          geohash: "9vg4mry",
-        },
-        query: {
-          affinity: 0.9866071428571429,
-          affinity_rank: 0.8921268716792787,
-          popularity: 0.7209821428571429,
-        },
-      },
-    ],
-  },
-  duration: 20,
-};

@@ -24,8 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { format, parseISO, subWeeks } from "date-fns";
 import { useState } from "react";
 import {
   Bar,
@@ -38,9 +40,16 @@ import {
   YAxis,
 } from "recharts";
 import { Markdown } from "./markdown";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, parseISO, subWeeks } from "date-fns";
-import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Card } from "./ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Separator } from "./ui/separator";
 
 const ENTITY_TYPES = {
   movie: "urn:entity:movie",
@@ -48,14 +57,23 @@ const ENTITY_TYPES = {
   artist: "urn:entity:artist",
   brand: "urn:entity:brand",
   podcast: "urn:entity:podcast",
-  tvShow: "urn:entity:tv_show",
+  tv_show: "urn:entity:tv_show",
   game: "urn:entity:videogame",
   destination: "urn:entity:destination",
   person: "urn:entity:person",
   place: "urn:entity:place",
 } as const;
-
 type EntityType = keyof typeof ENTITY_TYPES;
+
+const TRENDING_KEYS: EntityType[] = [
+  "artist",
+  "brand",
+  "movie",
+  "person",
+  "podcast",
+  "tv_show",
+];
+
 type TrendingItem = {
   date: string;
   population_percentile: number;
@@ -70,6 +88,7 @@ const PERIODS = {
   halfYear: 24,
   annual: 50,
 } as const;
+
 type PeriodKey = keyof typeof PERIODS;
 
 export function Analysis() {
@@ -117,28 +136,33 @@ export function Analysis() {
         entityType: type,
       });
       setSimilarData(rec);
-      const trending = await getTrendingData({
-        entityId: searchRes?.entityId!,
-        entityType: type,
-        startDate,
-        endDate,
-        take: 50,
-      });
-      const sortedTrending = trending.sort(
-        (a: TrendingItem, b: TrendingItem) =>
-          parseISO(a.date).getTime() - parseISO(b.date).getTime()
-      );
-      setTrendingData(sortedTrending);
+      if (TRENDING_KEYS.includes(type)) {
+        const trending = await getTrendingData({
+          entityId: searchRes!.entityId,
+          entityType: type,
+          startDate,
+          endDate,
+          take: 50,
+        });
+        setTrendingData(
+          trending.sort(
+            (a: TrendingItem, b: TrendingItem) =>
+              parseISO(a.date).getTime() - parseISO(b.date).getTime()
+          )
+        );
+      } else {
+        setTrendingData([]);
+      }
       // sendMessage({
       //   text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
       //     demoAnalysisData
       //   )}.`,
       // });
-      // tagsMessage({
-      //   text: `entityName: ${title} and entityType: ${type}. Here is the tags from the insight endpoint is: ${JSON.stringify(
-      //     tasteAnalysisData
-      //   )}.`,
-      // });
+      tagsMessage({
+        text: `entityName: ${title} and entityType: ${type}. Here is the tags from the insight endpoint is: ${JSON.stringify(
+          tasteAnalysisData
+        )}.`,
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -152,6 +176,7 @@ export function Analysis() {
         <div>
           <h1 className="w-full text-4xl underline">In Depth Analysis</h1>
         </div>
+        <Separator />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="entityTitle" className="px-1 mb-3">
@@ -191,6 +216,7 @@ export function Analysis() {
         <Button onClick={handleSubmit} disabled={loading || !title}>
           {loading ? "Loading..." : "Get Analysis"}
         </Button>
+        <Separator />
       </div>
       <div className="flex flex-col space-y-6 w-full max-w-5xl mx-auto items-center justify-center mt-5 pb-24">
         <Tabs
@@ -198,10 +224,18 @@ export function Analysis() {
           className="w-full max-w-6xl mx-auto items-start"
         >
           <TabsList className="mb-5">
-            <TabsTrigger value="demo">Demographic</TabsTrigger>
-            <TabsTrigger value="taste">Taste</TabsTrigger>
-            <TabsTrigger value="trend">Trend</TabsTrigger>
-            <TabsTrigger value="similar">Similar</TabsTrigger>
+            <TabsTrigger value="demo" className="hover:cursor-pointer">
+              Demographic
+            </TabsTrigger>
+            <TabsTrigger value="taste" className="hover:cursor-pointer">
+              Taste
+            </TabsTrigger>
+            <TabsTrigger value="trend" className="hover:cursor-pointer">
+              Trend
+            </TabsTrigger>
+            <TabsTrigger value="similar" className="hover:cursor-pointer">
+              Similar
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="demo" className="flex justify-center w-full">
             <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
@@ -254,72 +288,6 @@ export function Analysis() {
             </div>
           </TabsContent>
 
-          {/* <TabsContent value="trend" className="flex justify-center w-full">
-            <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
-              <div>
-                {trendingData.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {(
-                      [
-                        "population_percentile",
-                        "population_rank_velocity",
-                        "velocity_fold_change",
-                        "population_percent_delta",
-                      ] as Array<keyof typeof chartConfig>
-                    ).map((key) => {
-                      const title = chartConfig[key].label;
-                      return (
-                        <figure key={key} className="space-y-2">
-                          <ChartContainer
-                            config={chartConfig}
-                            className="h-72 w-full"
-                          >
-                            <LineChart
-                              data={trendingData}
-                              margin={{
-                                top: 20,
-                                right: 20,
-                                bottom: 5,
-                                left: 0,
-                              }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" />
-                              <XAxis
-                                dataKey="date"
-                                tickFormatter={(d: string) =>
-                                  format(parseISO(d), "MMM dd")
-                                }
-                              />
-                              <YAxis />
-                              <Tooltip
-                                content={
-                                  <ChartTooltipContent
-                                    nameKey={key}
-                                    labelFormatter={(d: string) =>
-                                      format(parseISO(d), "PPP")
-                                    }
-                                  />
-                                }
-                              />
-                              <Line
-                                type="monotone"
-                                dataKey={key}
-                                stroke={chartConfig[key].color}
-                                dot={{ r: 3 }}
-                              />
-                            </LineChart>
-                          </ChartContainer>
-                          <figcaption className="text-center text-sm text-gray-600">
-                            {title} Over Time
-                          </figcaption>
-                        </figure>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </TabsContent> */}
           <TabsContent value="trend" className="space-y-6">
             {trendingData.length > 0 && (
               <>
@@ -365,36 +333,33 @@ export function Analysis() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
           >
             {similarData.map((data, index) => (
-              <Card className="flex h-full flex-col overflow-hidden p-0 shadow-sm transition-shadow hover:shadow-md">
-                <div className="relative h-40 overflow-hidden sm:h-48 md:h-52">
-                  <img
-                    src={data.properties.image.url}
-                    alt={`Poster for ${data.name}`}
-                    className="object-cover transition-transform duration-300 hover:scale-105"
-                  />
-                </div>
-              </Card>
-              // <Card className="relative p-0">
-              //   <div className="absolute">
-              //     <img
-              //       src={data.properties.image.url}
-              //       className="relative w-[150px] h-[200px]overflow-hidden  object-cover"
-              //     />
-              //   </div>
-
-              //   <CardHeader className="p-3">
-              //     <CardTitle>{data.name}</CardTitle>
-              //     <CardDescription>
-              //       {type === "brand"
-              //         ? data.properties.short_description
-              //         : ["movie", "tv_show", "game"].includes(type)
-              //         ? data.properties.description
-              //         : null}
-              //     </CardDescription>
-              //   </CardHeader>
-              // </Card>
+              <Dialog key={index}>
+                <DialogTrigger asChild>
+                  <Card className="flex h-full flex-col overflow-hidden p-0 shadow-sm transition-shadow hover:shadow-md">
+                    <div className="relative h-40 overflow-hidden sm:h-48 md:h-52">
+                      <img
+                        src={data.properties.image.url}
+                        alt={`Poster for ${data.name}`}
+                        className="object-cover transition-transform duration-300 hover:scale-105"
+                      />
+                    </div>
+                  </Card>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>{data.name}</DialogTitle>
+                    <DialogDescription>
+                      {type === "brand"
+                        ? data.properties.short_description
+                        : ["movie", "tv_show", "game"].includes(type)
+                        ? data.properties.description
+                        : null}
+                    </DialogDescription>
+                  </DialogHeader>
+                </DialogContent>
+              </Dialog>
             ))}
-            <pre>{JSON.stringify(similarData, null, 2)}</pre>
+            {/* <pre>{JSON.stringify(similarData, null, 2)}</pre> */}
           </TabsContent>
         </Tabs>
       </div>
