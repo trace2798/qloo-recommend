@@ -39,29 +39,26 @@
 //   );
 // }
 
-
 import Footer from "@/components/footer/footer";
 import Navbar from "@/components/navigation/navbar";
 import { Button } from "@/components/ui/button";
-import { Link } from "next-view-transitions";
+import Link from "next/link";
 
 export default function Home() {
   return (
     <>
       <Navbar />
       <div className="absolute top-0 left-0 w-full h-full -z-10">
-        <img
-          src="/boston.jpeg"
-          className="w-full h-full object-cover blur-md"
-        />
+        <img src="/home.jpg" className="w-full h-full object-cover blur-lg" />
       </div>
-      <main className="grid grid-cols-1 md:grid-cols-2 w-full px-[5vw] gap-10 h-[88vh]">
+      <main className="grid grid-cols-1 md:grid-cols-2 w-full px-[5vw] gap-10 h-[88vh] ">
         <div className="flex flex-col justify-center items-center space-y-5 py-12 md:py-0">
           <h1 className="text-5xl md:text-6xl lg:text-7xl  font-bold font-generalSans">
-            AI-Driven Gains, Human Results.
+            Recommendation and Insight
           </h1>
           <h2 className="text-4xl font-bespokeSerif font-thin text-primary/80">
-            Smart programming, adaptive coaching to transform how you train.
+            Powered by Qloo, our platform delivers culturally-relevant insights
+            and recommendations
           </h2>
           <Link href={"/login"} className="w-full mt-10">
             <Button>Get Started</Button>
@@ -69,7 +66,7 @@ export default function Home() {
         </div>
         <div className="flex justify-center items-center overflow-hidden">
           <img
-            src="body.png"
+            src="home.jpg"
             alt="workout"
             className="w-full h-full max-h-[70vh] object-cover overflow-hidden rounded-xl"
           />
