@@ -57,10 +57,9 @@
 import { motion } from "framer-motion";
 
 const options = [
-  "Recommend me a movie similar to Good Will Hunting.",
-  "Recommend me something like And The Mountain Echoed to read.",
-  "Suggest me something like Breaking Bad.",
-  "Suggest me something similar to Yves Saint Laurent.",
+  "Italian restaurant in New york",
+  "Indian restaurant in alberta",
+  "Chinese restaurant in chicago",
 ];
 
 export const Greeting = ({
