@@ -15,7 +15,7 @@ const Page: FC<PageProps> = async ({}) => {
   }
   return (
     <>
-      <div>
+      <div className="w-full px-[5vw] py-12 flex flex-col space-y-10">
         <Chat userId={session.user.id} messagesFromDb={[]} />
       </div>
     </>
