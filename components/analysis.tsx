@@ -243,7 +243,7 @@ export function Analysis() {
           <TabsContent value="demo" className="flex justify-center w-full">
             <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
               <div>{data.length > 0 && <DemographicsChart data={data} />}</div>
-              <div>
+              <div className="flex flex-col-reverse space-y-5">
                 {messages
                   .filter((m) => m.role === "assistant")
                   .map((message) => (
@@ -269,7 +269,7 @@ export function Analysis() {
 
           <TabsContent value="taste" className="flex justify-center w-full">
             <div className="flex flex-col space-y-6 w-full max-w-6xl mx-auto">
-              <div>
+              <div className="flex flex-col-reverse space-y-5">
                 {tasteMessage
                   .filter((m) => m.role === "assistant")
                   .map((message) => (
