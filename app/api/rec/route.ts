@@ -136,6 +136,7 @@ export async function POST(req: Request) {
   console.log("USER ID FROM FE", userId);
   const latest = messages[messages.length - 1];
   console.log("LATET", latest);
+  const userQueryText = latest.parts.find(isTextPart)?.text ?? "";
   // 1. Take the last 3 (or fewer, if there aren’t yet three)
   const lastThree = messages.slice(-3);
 
@@ -214,7 +215,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: `Here is the list of tags: ${tagIds} and here is the user's query: ${latest.parts[0].text}`,
+          content: `Here is the list of tags: ${tagIds} and here is the user's query: ${userQueryText}`,
         },
       ],
       temperature: 0,
@@ -322,7 +323,7 @@ Now craft a friendly, concise reply listing and explaining them.
     messages: [
       {
         role: "user",
-        content: `Here is the list of tags: ${tagIds} and here is the user's query: ${latest.parts[0].text}`,
+        content: `Here is the list of tags: ${tagIds} and here is the user's query: ${userQueryText}`,
       },
     ],
     temperature: 0,
@@ -375,7 +376,7 @@ Now craft a friendly, concise reply listing and explaining them.
     messages: [
       {
         role: "user",
-        content: `Here is the user's query: ${latest.parts[0].text} and here are the recommendation: ${recsJson}`,
+        content: `Here is the user's query: ${userQueryText} and here are the recommendation: ${recsJson}`,
       },
     ],
   });
@@ -693,6 +694,6 @@ async function fetchRecommendationsDynamic({
     },
   });
   const data = await res.json();
-  console.log("FETCH REC DYNAMIC", data.results.entities)
+  console.log("FETCH REC DYNAMIC", data.results.entities);
   return slimDownEntities(data, "place");
 }
