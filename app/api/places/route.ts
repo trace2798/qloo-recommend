@@ -253,7 +253,11 @@ export async function POST(req: Request) {
     messages: [
       {
         role: "user",
-        content: `Here is the user's query: ${userQueryText} and here are the recommendation: ${deduplicatedResults}`,
+        content: `Here is the user's query: ${userQueryText} and here are the recommendation: ${JSON.stringify(
+          deduplicatedResults,
+          null,
+          2
+        )}`,
       },
     ],
   });
