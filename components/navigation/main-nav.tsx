@@ -7,7 +7,6 @@ import Link from "next/link";
 
 const TABS = [
   "Home",
-  "About",
 ];
 
 export default function MainNav() {

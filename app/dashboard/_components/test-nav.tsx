@@ -6,7 +6,7 @@ import { MotionConfig, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = ["Dashboard", "Rec", "Insight", "Places", "Settings"];
+const TABS = ["Dashboard", "Rec", "Insight", "Places"];
 
 function slugify(tab: string) {
   return tab.toLowerCase().replace(/\s+/g, "-");

@@ -43,7 +43,7 @@ const ENTITY_TYPES = {
   artist: "urn:entity:artist",
   brand: "urn:entity:brand",
   podcast: "urn:entity:podcast",
-  tvShow: "urn:entity:tvshow",
+  tv_show: "urn:entity:tv_show",
   game: "urn:entity:videogame",
   destination: "urn:entity:destination",
   person: "urn:entity:person",

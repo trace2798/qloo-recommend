@@ -335,7 +335,7 @@ export function Analysis() {
             value="similar"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
           >
-            {similarData.map((data, index) => (
+            {similarData.map((data: any, index) => (
               <Dialog key={index}>
                 <DialogTrigger asChild>
                   <Card className="flex h-full flex-col overflow-hidden p-0 shadow-sm transition-shadow hover:shadow-md">
