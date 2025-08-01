@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rec & Sight
 
-## Getting Started
+Rec & Sight is a web application that offers recommendations and indepth insight based on Qloo's data.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Recommendation: Get recommendation of based on Qloo's data with LLM.
+Insight: Get indepth Analysis of an Qloo Entity. 
+Places: Discover places theat local loves. 
+
+## Technologies Used
+
+Frontend: Next.js 15.
+Backend: Modus hosted on Hypermode for a robust backend infrastructure.
+Data Sources:
+Qloo APIs.
+AI Model: Meta Llama 3.3 and Llama 4 to generate response to users. 
+
+## Installation
+
+Clone the Repository
+
+```code
+git clone https://github.com/trace2798/qloo-recommend.git
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Navigate to the Project Directory
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```code
+cd qloo-recommend
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Install Dependencies
 
-## Learn More
+```code
+npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+Set Up Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a .env file in the root directory and add the following:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```code
 
-## Deploy on Vercel
+QLOO_API_KEY=""
+QLOO_BASE_URL=""
+OPENROUTER_API_KEY=""
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+TURSO_DATABASE_URL=""
+TURSO_AUTH_TOKEN=""
+BETTER_AUTH_SECRET=""
+BETTER_AUTH_URL="http://localhost:3000" 
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+
+```
+After adding all the endpoints. Run the following command to set the DB
+```code
+
+npx drizzle-kit generate
+nox drizzle-kit migrate
+
+```
+
+
+Run the Application
+
+```code
+    npm run dev
+```
+
+## Access the Application
+
+Open your browser and navigate to http://localhost:3000.
+
+Usage
+After login you will be redirected to the dashboard. From there click on any of the 3 options to test it out.
+
+License
+
+This project is licensed under the MIT License.
