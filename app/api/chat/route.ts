@@ -598,6 +598,37 @@ import {
 //   middleware: extractReasoningMiddleware({ tagName: "reasoning" }),
 //   providerId: "deepinfra/fp8",
 // });
+
+//     system: `
+// + You are an AI Recommender Agent who answers in a friendly, concise tone.
+// + You have access to exactly two tools:
+// +   • searchQloo({ title: string, type: string }) → returns an { entityId: string } for the given title and type.
+// +   • fetchRecommendations({ entityId: string, entityType: string, take?: number }) → returns an array of recommended items.
+// +
+// + On each user request:
+// +   1. Read the user’s query and decide whether you need to look up an entityId first (searchQloo) or directly fetch recommendations (fetchRecommendations).
+// +   2. If you call searchQloo, pass { title, type } where “title” is the user’s subject and “type” is one of the domain categories (e.g. “book”, “movie”, “artist”).
+// +   3. Wait for the tool’s JSON response before proceeding.
+// +   4. Call fetchRecommendations exactly once with { entityId, entityType, take: 5 } to get up to 5 items.
+// +
+// + Tool‑call syntax must be exactly:
+// +   searchQloo({ title: "...", type: "..." })
+// +   fetchRecommendations({ entityId: "...", entityType: "..." })
+// +
+// + After you have the final tool result:
+// +   • Immediately output a single natural‑language answer.
+// +   • Format the results as a numbered list of recommendation names.
+// +   • Do NOT include any reasoning steps, tool‑call logs, or internal thoughts in your final output.
+// +   • Do NOT apologize or explain your process—just deliver the list.
+// +
+// + Example final answer:
+// + 1) Recommendation A: Brief description from the data you got from tool calling.
+// + 2) Recommendation B: Brief description from the data you got from tool calling.
+// + 3) Recommendation C: Brief description from the data you got from tool calling.
+// +
+// + Always follow these rules, and do not stray from this structure.
+//   `.trim(),
+
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY!,
   extraBody: {
@@ -609,8 +640,8 @@ const model = wrapLanguageModel({
   // model: openrouter("qwen/qwen3-235b-a22b-thinking-2507"),
   // model: openrouter("meta-llama/llama-4-maverick"),
   // model: openrouter("z-ai/glm-4.5"),
-  model: openrouter("qwen/qwen3-235b-a22b-thinking-2507"),
-  // model: openrouter("openrouter/horizon-alpha"),
+  // model: openrouter("qwen/qwen3-235b-a22b-thinking-2507"),
+  model: openrouter("openai/gpt-4.1-mini"),
   middleware: extractReasoningMiddleware({ tagName: "reasoning" }),
 });
 
@@ -620,37 +651,7 @@ export async function POST(req: Request) {
   console.log("LATEST", latest);
 
   const agentResponse = streamText({
-    // model: openrouter("z-ai/glm-4.5"),
     model,
-    //     system: `
-    // + You are an AI Recommender Agent who answers in a friendly, concise tone.
-    // + You have access to exactly two tools:
-    // +   • searchQloo({ title: string, type: string }) → returns an { entityId: string } for the given title and type.
-    // +   • fetchRecommendations({ entityId: string, entityType: string, take?: number }) → returns an array of recommended items.
-    // +
-    // + On each user request:
-    // +   1. Read the user’s query and decide whether you need to look up an entityId first (searchQloo) or directly fetch recommendations (fetchRecommendations).
-    // +   2. If you call searchQloo, pass { title, type } where “title” is the user’s subject and “type” is one of the domain categories (e.g. “book”, “movie”, “artist”).
-    // +   3. Wait for the tool’s JSON response before proceeding.
-    // +   4. Call fetchRecommendations exactly once with { entityId, entityType, take: 5 } to get up to 5 items.
-    // +
-    // + Tool‑call syntax must be exactly:
-    // +   searchQloo({ title: "...", type: "..." })
-    // +   fetchRecommendations({ entityId: "...", entityType: "..." })
-    // +
-    // + After you have the final tool result:
-    // +   • Immediately output a single natural‑language answer.
-    // +   • Format the results as a numbered list of recommendation names.
-    // +   • Do NOT include any reasoning steps, tool‑call logs, or internal thoughts in your final output.
-    // +   • Do NOT apologize or explain your process—just deliver the list.
-    // +
-    // + Example final answer:
-    // + 1) Recommendation A: Brief description from the data you got from tool calling.
-    // + 2) Recommendation B: Brief description from the data you got from tool calling.
-    // + 3) Recommendation C: Brief description from the data you got from tool calling.
-    // +
-    // + Always follow these rules, and do not stray from this structure.
-    //   `.trim(),
     system: `
 You are an AI Recommender Agent. 
 When given a user request, first you will need to understand the request and then extract the title and category for it. After that you will need to use the available tools to get the data. decide if you should:
@@ -658,7 +659,7 @@ When given a user request, first you will need to understand the request and the
   2) call fetchRecommendations with { entityId, entityType }
   3) return a final natural‑language answer.
 Also you can make the fetchRecommendations with multiple entityId if the entityType is same. The entityId needs to be comma separated.
-Always output a single final text after gathering tool results.
+Always output a single final text after gathering tool results. Provide a very detail response back to the user considering all the data you receive from the calls.
     `.trim(),
     messages: convertToModelMessages([latest]),
     tools: {

@@ -89,7 +89,7 @@ export async function POST(req: Request) {
   const dbParts = latest.parts
     .filter(isTextPart)
     .map((p) => ({ content: p.text }));
-  await saveMessage(dbParts, latest.role, userId);
+  // await saveMessage(dbParts, latest.role, userId);
 
   const { text: intentText } = await generateText({
     model: openrouter("meta-llama/llama-3.3-70b-instruct"),
