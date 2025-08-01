@@ -38,7 +38,7 @@ const Navbar = ({
       >
         <div className="flex items-center">
           <a
-            href={"/"}
+            href={"/dashboard"}
             className="text-primary hover:text-primary/80 hover:cursor-pointer"
           >
             <div className=" ml-3 flex flex-col">

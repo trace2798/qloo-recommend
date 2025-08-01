@@ -152,11 +152,11 @@ export function Analysis() {
       } else {
         setTrendingData([]);
       }
-      // sendMessage({
-      //   text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
-      //     demoAnalysisData
-      //   )}.`,
-      // });
+      sendMessage({
+        text: `entityName: ${title} and entityType: ${type}. Here is the demographic data from the insight endpoint is: ${JSON.stringify(
+          demoAnalysisData
+        )}.`,
+      });
       tagsMessage({
         text: `entityName: ${title} and entityType: ${type}. Here is the tags from the insight endpoint is: ${JSON.stringify(
           tasteAnalysisData
@@ -232,7 +232,7 @@ export function Analysis() {
             <TabsTrigger
               value="trend"
               className="hover:cursor-pointer"
-              disabled={TRENDING_KEYS.includes(type)}
+              disabled={!TRENDING_KEYS.includes(type)}
             >
               Trend
             </TabsTrigger>
