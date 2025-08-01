@@ -120,16 +120,16 @@ export function Analysis() {
     setLoading(true);
     try {
       const searchRes = await searchQloo({ title, entityType: type });
-      console.log("SEARCH RES", searchRes);
+      // console.log("SEARCH RES", searchRes);
       const demoAnalysisData = await getDemographicData({
         entityId: searchRes?.entityId!,
       });
-      console.log("DEMO", demoAnalysisData);
+      // console.log("DEMO", demoAnalysisData);
       setData(demoAnalysisData);
       const tasteAnalysisData = await getTasteData({
         entityId: searchRes?.entityId!,
       });
-      console.log("Tags", tasteAnalysisData);
+      // console.log("Tags", tasteAnalysisData);
       const rec = await fetchRecommendation({
         entityId: searchRes?.entityId!,
         entityType: type,

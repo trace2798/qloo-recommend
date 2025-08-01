@@ -108,7 +108,7 @@ async function searchTags(query: string, take = 3): Promise<string[]> {
   const url = new URL(`${process.env.QLOO_BASE_URL}/v2/tags`);
   url.searchParams.set("feature.typo_tolerance", "true");
   url.searchParams.set("filter.query", query);
-  console.log("SEARCH TAGS");
+  // console.log("SEARCH TAGS");
   const res = await fetch(url.toString(), {
     headers: {
       "Content-Type": "application/json",
@@ -118,7 +118,7 @@ async function searchTags(query: string, take = 3): Promise<string[]> {
   // https://hackathon.api.qloo.com/v2/tags?feature.typo_tolerance=true&filter.results.tags=urn%3Atag%3Akeyword%3Amedia%3Aextracurricular_activity
   if (!res.ok) return [];
   const { results } = await res.json();
-  console.log("SEARCH TAG RESULTS", results);
+  // console.log("SEARCH TAG RESULTS", results);
   return results.tags.map((t: any) => t.id);
 }
 
@@ -132,10 +132,10 @@ export async function POST(req: Request) {
     messages: UIMessage[];
     userId: string;
   } = await req.json();
-  console.log("MESSAGE", messages);
-  console.log("USER ID FROM FE", userId);
+  // console.log("MESSAGE", messages);
+  // console.log("USER ID FROM FE", userId);
   const latest = messages[messages.length - 1];
-  console.log("LATET", latest);
+  // console.log("LATET", latest);
   const userQueryText = latest.parts.find(isTextPart)?.text ?? "";
   // 1. Take the last 3 (or fewer, if there aren’t yet three)
   const lastThree = messages.slice(-3);
@@ -153,7 +153,7 @@ export async function POST(req: Request) {
     messages: modelInputs,
     temperature: 0,
   });
-  console.log("TEXT:", intentText);
+  // console.log("TEXT:", intentText);
   let intents: Intent[];
   try {
     const parsed = JSON.parse(intentText);
@@ -181,12 +181,12 @@ export async function POST(req: Request) {
       messages: convertToModelMessages([latest]),
       temperature: 0,
     });
-    console.log("AI EXTRACTED KEYOWRD:", extractedKeywords);
+    // console.log("AI EXTRACTED KEYOWRD:", extractedKeywords);
     const keywords: string[] = JSON.parse(extractedKeywords);
     const tagIdLists = await Promise.all(
       keywords.map((kw) => searchTags(kw, 3))
     );
-    console.log("TAG ID LIST", tagIdLists);
+    // console.log("TAG ID LIST", tagIdLists);
     const tagIds = Array.from(new Set(tagIdLists.flat()));
     const filterPrompt =
       "You are a smart tag-filter." +
@@ -221,7 +221,7 @@ export async function POST(req: Request) {
       temperature: 0,
     });
 
-    console.log("AI FIltered tags:", filteredJson);
+    // console.log("AI FIltered tags:", filteredJson);
     let finalTagIds: string[];
     try {
       const parsed = JSON.parse(filteredJson) as string[];
@@ -291,10 +291,10 @@ Now craft a friendly, concise reply listing and explaining them.
     messages: convertToModelMessages([latest]),
     temperature: 0,
   });
-  console.log("AI EXTRACTED KEYOWRD:", extractedKeywords);
+  // console.log("AI EXTRACTED KEYOWRD:", extractedKeywords);
   const keywords: string[] = JSON.parse(extractedKeywords);
   const tagIdLists = await Promise.all(keywords.map((kw) => searchTags(kw, 3)));
-  console.log("TAG ID LIST", tagIdLists);
+  // console.log("TAG ID LIST", tagIdLists);
   const tagIds = Array.from(new Set(tagIdLists.flat()));
   const filterPrompt =
     "You are a smart tag-filter." +
@@ -329,7 +329,7 @@ Now craft a friendly, concise reply listing and explaining them.
     temperature: 0,
   });
 
-  console.log("AI FIltered tags:", filteredJson);
+  // console.log("AI FIltered tags:", filteredJson);
 
   let finalTagIds: string[];
   try {
@@ -405,7 +405,7 @@ const searchQloo = async ({
     },
   });
   const json = await res.json();
-  console.log("Search JSON", json);
+  // console.log("Search JSON", json);
   const first = Array.isArray(json.results) && json.results[0];
 
   if (!first) return null;
@@ -583,7 +583,7 @@ const fetchRecommendationsBatch = async ({
   }
 
   const data = await res.json();
-  console.log("BATCH REC:", data.results.entities);
+  // console.log("BATCH REC:", data.results.entities);
   return slimDownEntities(data, entityType);
 };
 
@@ -603,8 +603,8 @@ async function fetchRecommendationsByTags({
   url.searchParams.set("filter.type", urn);
   url.searchParams.set("filter.tags", tagIds.join(","));
   url.searchParams.set("take", String(take));
-  console.log("FETCH REC BY tags");
-  console.log("Tags", tagIds.join(","));
+  // console.log("FETCH REC BY tags");
+  // console.log("Tags", tagIds.join(","));
   const res = await fetch(url.toString(), {
     headers: {
       "Content-Type": "application/json",
@@ -613,7 +613,7 @@ async function fetchRecommendationsByTags({
   });
   if (!res.ok) return [];
   const data = await res.json();
-  console.log("FETCH REC TAGS", data.results.entities);
+  // console.log("FETCH REC TAGS", data.results.entities);
   return slimDownEntities(data, entityType);
 }
 
@@ -644,7 +644,7 @@ async function fetchRecommendationsWithEntitiesAndTags({
   });
   if (!res.ok) return [];
   const data = await res.json();
-  console.log("FETCH REc BY ID and TAgs", data.results.entities);
+  // console.log("FETCH REc BY ID and TAgs", data.results.entities);
   return slimDownEntities(data, entityType);
 }
 
@@ -694,6 +694,6 @@ async function fetchRecommendationsDynamic({
     },
   });
   const data = await res.json();
-  console.log("FETCH REC DYNAMIC", data.results.entities);
+  // console.log("FETCH REC DYNAMIC", data.results.entities);
   return slimDownEntities(data, "place");
 }

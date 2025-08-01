@@ -44,7 +44,7 @@
 //             transition={{ delay: 0.7 + index * 0.1 }}
 //             onClick={() => {
 //               // Replace this with your sendMessage logic
-//               console.log(text);
+//               // console.log(text);
 //             }}
 //           >
 //             {text}

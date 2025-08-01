@@ -117,7 +117,7 @@ async function searchTags(query: string, take = 3): Promise<string[]> {
   const url = new URL(`${process.env.QLOO_BASE_URL}/v2/tags`);
   url.searchParams.set("feature.typo_tolerance", "true");
   url.searchParams.set("filter.query", query);
-  console.log("SEARCH TAGS");
+  // console.log("SEARCH TAGS");
   const res = await fetch(url.toString(), {
     headers: {
       "Content-Type": "application/json",
@@ -127,7 +127,7 @@ async function searchTags(query: string, take = 3): Promise<string[]> {
   // https://hackathon.api.qloo.com/v2/tags?feature.typo_tolerance=true&filter.results.tags=urn%3Atag%3Akeyword%3Amedia%3Aextracurricular_activity
   if (!res.ok) return [];
   const { results } = await res.json();
-  // console.log("SEARCH TAG RESULTS", results);
+  // // console.log("SEARCH TAG RESULTS", results);
   return results.tags.map((t: any) => t.id);
 }
 
@@ -141,10 +141,10 @@ export async function POST(req: Request) {
     messages: UIMessage[];
     userId: string;
   } = await req.json();
-  console.log("MESSAGE", messages);
-  console.log("USER ID FROM FE", userId);
+  // console.log("MESSAGE", messages);
+  // console.log("USER ID FROM FE", userId);
   const latest = messages[messages.length - 1];
-  console.log("LATET", latest);
+  // console.log("LATET", latest);
   const userQueryText = latest.parts.find(isTextPart)?.text ?? "";
   const dbParts = latest.parts
     .filter(isTextPart)
@@ -157,7 +157,7 @@ export async function POST(req: Request) {
     messages: convertToModelMessages([latest]),
     temperature: 0,
   });
-  console.log("user looking:", userLooking);
+  // console.log("user looking:", userLooking);
   const userLook: string = JSON.parse(userLooking);
 
   const { text: extractedKeywords } = await generateText({
@@ -166,10 +166,10 @@ export async function POST(req: Request) {
     messages: convertToModelMessages([latest]),
     temperature: 0,
   });
-  console.log("AI EXTRACTED KEYOWRD:", extractedKeywords);
+  // console.log("AI EXTRACTED KEYOWRD:", extractedKeywords);
   const keywords: string[] = JSON.parse(extractedKeywords);
   const tagIdLists = await Promise.all(keywords.map((kw) => searchTags(kw, 3)));
-  console.log("TAG ID LIST", tagIdLists);
+  // console.log("TAG ID LIST", tagIdLists);
   const tagIds = Array.from(new Set(tagIdLists.flat()));
   const filterPrompt =
     "You are a smart tag-filter." +
@@ -203,7 +203,7 @@ export async function POST(req: Request) {
     temperature: 0,
   });
 
-  console.log("AI FIltered tags:", filteredJson);
+  // console.log("AI FIltered tags:", filteredJson);
 
   let finalTagIds: string[];
   try {
@@ -286,7 +286,7 @@ const searchQloo = async ({
     },
   });
   const json = await res.json();
-  console.log("Search JSON", json);
+  // console.log("Search JSON", json);
   const first = Array.isArray(json.results) && json.results[0];
   if (!first) return null;
   const { entity_id, name, location } = first as {
@@ -328,7 +328,7 @@ async function fetchRecommendationsByQuery({
 
   url.searchParams.set("take", String(take));
 
-  console.log("Endpoint URL:", url.toString());
+  // console.log("Endpoint URL:", url.toString());
 
   const res = await fetch(url.toString(), {
     headers: {
@@ -339,6 +339,6 @@ async function fetchRecommendationsByQuery({
 
   if (!res.ok) return [];
   const data = await res.json();
-  console.log("FETCH Rec BY TAG and LOCATION", data.results.entities);
+  // console.log("FETCH Rec BY TAG and LOCATION", data.results.entities);
   return data.results.entities;
 }

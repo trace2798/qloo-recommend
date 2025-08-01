@@ -52,7 +52,7 @@ const SearchButton = ({}) => {
       );
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const json = await res.json();
-      console.log("JSON", json);
+      // console.log("JSON", json);
       setResults(json.results);
     } catch (err: any) {
       console.error(err);

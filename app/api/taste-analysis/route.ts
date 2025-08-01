@@ -81,8 +81,8 @@ const tasteSystemPrompt =
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
   const latest = messages[messages.length - 1];
-  console.log("Tags Latest", latest);
-  console.log("LATEST:", latest.parts);
+  // console.log("Tags Latest", latest);
+  // console.log("LATEST:", latest.parts);
 
   const response = streamText({
     model: openrouter("meta-llama/llama-4-maverick"),

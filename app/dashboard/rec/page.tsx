@@ -25,7 +25,7 @@ const Page = async ({}) => {
       text: p.content,
     })),
   }));
-  console.log("MESSAGE FROM DB", messagesFromDb);
+  // console.log("MESSAGE FROM DB", messagesFromDb);
   return (
     <>
       <div className="w-full px-[5vw] py-12 flex flex-col space-y-10">

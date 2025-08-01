@@ -80,9 +80,9 @@ import {
 
 // // export async function POST(req: Request) {
 // //   const { messages }: { messages: UIMessage[] } = await req.json();
-// //   console.log("[agent] incoming messages:", messages);
+// //   // console.log("[agent] incoming messages:", messages);
 // //   const latest = messages[messages.length - 1];
-// //   console.log("LATEST", latest);
+// //   // console.log("LATEST", latest);
 // //   const response = streamText({
 // //     model,
 // //     tools: { entityIdLookup, getRecommendationsByEntityId },
@@ -378,16 +378,16 @@ import {
 //     id: string;
 //     messages: UIMessage[];
 //   } = await req.json();
-//   console.log("MESSAGE", messages);
+//   // console.log("MESSAGE", messages);
 //   const latest = messages[messages.length - 1];
-//   console.log("LATET", latest);
+//   // console.log("LATET", latest);
 //   const { text: intentText } = await generateText({
 //     model: openrouter("meta-llama/llama-3.3-70b-instruct"),
 //     system: systemPrompt,
 //     messages: convertToModelMessages([latest]),
 //     temperature: 0,
 //   });
-//   console.log("TEXT:", intentText);
+//   // console.log("TEXT:", intentText);
 //   // let intent: { title: string; type: EntityType };
 //   // try {
 //   //   intent = JSON.parse(text);
@@ -401,7 +401,7 @@ import {
 //   //   title: intent.title,
 //   //   entityType: intent.type,
 //   // });
-//   // console.log("LOOKUP", lookupResult);
+//   // // console.log("LOOKUP", lookupResult);
 //   // if (!lookupResult) {
 //   //   return new Response(JSON.stringify({ error: "No entity found" }), {
 //   //     status: 404,
@@ -413,7 +413,7 @@ import {
 //   //   entityType: intent.type,
 //   //   take: 5,
 //   // });
-//   // console.log("REC", recs);
+//   // // console.log("REC", recs);
 //   //  const recsJson = JSON.stringify(recs, null, 2);
 //   let intents: Intent[];
 //   try {
@@ -502,7 +502,7 @@ import {
 //     },
 //   });
 //   const json = await res.json();
-//   console.log("Search JSON", json);
+//   // console.log("Search JSON", json);
 //   const first = Array.isArray(json.results) && json.results[0];
 
 //   if (!first) return null;
@@ -585,7 +585,7 @@ import {
 //   }
 
 //   const data = await res.json();
-//   console.log("REC DATA", data.results);
+//   // console.log("REC DATA", data.results);
 //   return slimDownEntities(data);
 // };
 
@@ -648,7 +648,7 @@ const model = wrapLanguageModel({
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
   const latest = messages[messages.length - 1];
-  console.log("LATEST", latest);
+  // console.log("LATEST", latest);
 
   const agentResponse = streamText({
     model,

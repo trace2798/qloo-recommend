@@ -46,9 +46,9 @@ export function Chat({
       }),
       onData: (dataPart) => {},
       onFinish: async ({ message }) => {
-        console.log("Final message received!");
-        console.log("Final message:", message);
-        console.log("Final message parts:", message.parts);
+        // console.log("Final message received!");
+        // console.log("Final message:", message);
+        // console.log("Final message parts:", message.parts);
         const dbParts = message.parts
           .filter(isTextPart)
           .map((p) => ({ content: p.text }));
@@ -56,7 +56,7 @@ export function Chat({
       },
       onError: (error) => {
         if (error) {
-          console.log("ERROR", error);
+          // console.log("ERROR", error);
           toast.error("ERROR");
         }
       },

@@ -101,7 +101,7 @@ export function TrendingChart() {
     setLoading(true);
     try {
       const searchRes = await searchQloo({ title, entityType: type });
-      console.log("SEARCH RES", searchRes);
+      // console.log("SEARCH RES", searchRes);
       const trending = await getTrendingData({
         entityId: searchRes?.entityId as string,
         entityType: type,
@@ -109,7 +109,7 @@ export function TrendingChart() {
         endDate,
         take: 50,
       });
-      console.log("TRENDING Response", trending);
+      // console.log("TRENDING Response", trending);
       const trendingSorted = trending.sort(
         (a: TrendingItem, b: TrendingItem) =>
           parseISO(a.date).getTime() - parseISO(b.date).getTime()

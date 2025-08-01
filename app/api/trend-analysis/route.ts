@@ -58,8 +58,8 @@ const systemPrompt =
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
   const latest = messages[messages.length - 1];
-  console.log("LATEST", latest);
-  console.log("LATEST:", latest.parts);
+  // console.log("LATEST", latest);
+  // console.log("LATEST:", latest.parts);
 
   const response = streamText({
     model,

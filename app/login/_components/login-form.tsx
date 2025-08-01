@@ -60,7 +60,7 @@ export default function LoginForm() {
           toast.loading("Logging you in...");
         },
         onSuccess: (ctx) => {
-          // // console.log("On Success", ctx);
+          // // // console.log("On Success", ctx);
           toast.success("Logged in successfully");
           setSubmitting(false);
           //redirect to the dashboard or sign in page
@@ -72,7 +72,7 @@ export default function LoginForm() {
         },
       }
     );
-    // // console.log("Data:", data);
+    // // // console.log("Data:", data);
   };
   const handleGithubSignIn = async (e: React.FormEvent) => {
     setSubmitting(true);
@@ -89,7 +89,7 @@ export default function LoginForm() {
           toast.loading("Logging you in...");
         },
         onSuccess: (ctx) => {
-          // // console.log("On Success", ctx);
+          // // // console.log("On Success", ctx);
           toast.success("Logged in successfully");
           setSubmitting(false);
           //redirect to the dashboard or sign in page

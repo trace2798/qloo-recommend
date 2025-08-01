@@ -41,7 +41,7 @@ export const searchQloo = async ({
   });
 
   const json = await res.json();
-  console.log("RES JSON", json);
+  // console.log("RES JSON", json);
   const first = Array.isArray(json.results) && json.results[0];
 
   if (!first) return null;
@@ -65,8 +65,8 @@ export async function getTrendingData({
   endDate: Date;
   take?: number;
 }) {
-  console.log("START DATE", startDate);
-  console.log("END DATE", endDate);
+  // console.log("START DATE", startDate);
+  // console.log("END DATE", endDate);
   const urn = ENTITY_TYPES[entityType];
   const qs = new URLSearchParams({
     "signal.interests.entities": entityId,
@@ -91,7 +91,7 @@ export async function getTrendingData({
   }
 
   const json = await res.json();
-  console.log("TRENDING", json.results);
+  // console.log("TRENDING", json.results);
   return json.results.trending;
 }
 
@@ -115,7 +115,7 @@ export async function getDemographicData({ entityId }: { entityId: string }) {
   }
 
   const json = await res.json();
-  console.log("Demo ANalysis", json.results.demographics);
+  // console.log("Demo ANalysis", json.results.demographics);
   return json.results.demographics;
 }
 
@@ -139,7 +139,7 @@ export async function getTasteData({ entityId }: { entityId: string }) {
   }
 
   const json = await res.json();
-  console.log("Taste ANalysis", json.results.tags);
+  // console.log("Taste ANalysis", json.results.tags);
   return json.results.tags;
 }
 
@@ -175,7 +175,7 @@ export async function fetchRecommendation({
   }
 
   const data = await res.json();
-  console.log("REC DATA", data.results);
+  // console.log("REC DATA", data.results);
   return data.results.entities;
 }
 
@@ -229,7 +229,7 @@ export const saveMessage = async (
 //   }
 
 //   const data = await res.json();
-//   console.log("REC DATA", data.results);
+//   // console.log("REC DATA", data.results);
 //   return slimDownEntities(data);
 // };
 
