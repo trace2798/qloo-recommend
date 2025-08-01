@@ -13,26 +13,16 @@ import {
 } from "ai";
 
 const ENTITY_TYPES = {
-  movie: "urn:entity:movie",
-  book: "urn:entity:book",
-  artist: "urn:entity:artist",
-  brand: "urn:entity:brand",
-  podcast: "urn:entity:podcast",
-  tvShow: "urn:entity:tv_show",
-  game: "urn:entity:videogame",
   destination: "urn:entity:destination",
-  person: "urn:entity:person",
   place: "urn:entity:place",
 } as const;
+
 type EntityType = keyof typeof ENTITY_TYPES;
 
 export const maxDuration = 60;
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY!,
-  //   extraBody: {
-  //     include_reasoning: true,
-  //   },
 });
 const model = wrapLanguageModel({
   model: openrouter("meta-llama/llama-4-maverick"),
@@ -44,33 +34,25 @@ const model = wrapLanguageModel({
 const systemPrompt =
   "You are an intent parser. Your job is to extract **only** the seed entities and their types, **without** generating any recommendations.  \n" +
   "If the user's query is abstract without an title then respond with an empty array: []\n" +
-  "Output **must** be a JSON array of objects with keys **title** and **type** (e.g. movie, book, artist, brand, podcast, tv_show, game, destination, person, place). \n" +
+  "Output **must** be a JSON array of objects with keys **title** and **type** (e.g. destination or person). \n" +
   "When the user sends a query, you **must** emit exactly one JSON array of objects (no prose, no markdown, no extra fields) with these two properties:\n\n" +
   '• "title" (string) – the name of the thing the user is asking about\n' +
-  '• "type" (string) – one of: movie, book, artist, brand, podcast, tv_show, game, destination, person, place\n\n' +
+  '• "type" (string) – one of: destination or place\n\n' +
   "For city, country etc etc destination should be used and for restaurant, museums etc place should be used. ";
 "Make sure your output is valid JSON (double‑quoted keys and strings) and contains **only** that array.\n\n" +
   "Example:\n" +
-  "Input: “Suggest brands similar to Yves Saint Laurent” \n" +
+  "Input: “Suggest restaurant in london” \n" +
   "```json\n" +
   "[\n" +
-  '{ "title": "Yves Saint Laurent", "type": "brand" }\n' +
+  '{ "title": "London", "type": "destination" }\n' +
   "]\n" +
   "```\n" +
-  "Input: “Suggest movies similar to Inception and The Matrix” \n" +
+  "Input: “indian restaurant like Dishoom in New York” \n" +
   "```json\n" +
   "[\n" +
-  '{ "title": "Inception", "type": "movie" }\n' +
-  `{ "title": "The Matrix", "type": "movie" }\n` +
+  '{ "title": "New York", "type": "destination" }\n' +
+  `{ "title": "Dishoom", "type": "place" }\n` +
   "]\n" +
-  "```\n" +
-  "Input: “Some movie that a teenager will enjoy, not too much violence” \n" +
-  "```json\n" +
-  "[]\n" +
-  "```\n" +
-  "Input: “Fun movie to watch on the weekend, ideally comedy” \n" +
-  "```json\n" +
-  "[]\n" +
   "```\n" +
   "If you can’t identify any title/type pairs, respond with an empty array: []";
 
@@ -136,11 +118,7 @@ export async function POST(req: Request) {
   console.log("USER ID FROM FE", userId);
   const latest = messages[messages.length - 1];
   console.log("LATET", latest);
-  // 1. Take the last 3 (or fewer, if there aren’t yet three)
-  const lastThree = messages.slice(-3);
 
-  // 2. For intent parsing or keyword extraction, feed in all three:
-  const modelInputs = convertToModelMessages(lastThree);
   const dbParts = latest.parts
     .filter(isTextPart)
     .map((p) => ({ content: p.text }));
@@ -149,7 +127,7 @@ export async function POST(req: Request) {
   const { text: intentText } = await generateText({
     model: openrouter("meta-llama/llama-3.3-70b-instruct"),
     system: systemPrompt,
-    messages: modelInputs,
+    messages: convertToModelMessages([latest]),
     temperature: 0,
   });
   console.log("TEXT:", intentText);
@@ -275,8 +253,18 @@ Now craft a friendly, concise reply listing and explaining them.
     intents.map(({ title, type }) => searchQloo({ title, entityType: type }))
   );
   const validEntities = lookups.filter(
-    (r): r is { entityId: string; name: string } => r !== null
+    (
+      r
+    ): r is {
+      entityId: string;
+      name: string;
+      location: {
+        lat: number;
+        lon: number;
+      };
+    } => r !== null
   );
+  console.log("VALID ENTITIES PLACES", validEntities);
   if (validEntities.length === 0) {
     return new Response(JSON.stringify({ error: "No entities found" }), {
       status: 404,
@@ -344,29 +332,35 @@ Now craft a friendly, concise reply listing and explaining them.
     finalTagIds = tagIds;
   }
 
-  const groupedByType: Record<EntityType, string[]> = {} as any;
+  const groupedByType: Record<EntityType, typeof validEntities> = {} as any;
 
   validEntities.forEach((ent, idx) => {
-    const type = intents[idx].type;
+    const type = intents[idx].type as EntityType;
     if (!groupedByType[type]) groupedByType[type] = [];
-    groupedByType[type].push(ent.entityId);
+    groupedByType[type].push(ent);
   });
+
+  // 2) Fire off a recommendation request per type, pulling location from the first entity in each group
   const recLists = await Promise.all(
-    Object.entries(groupedByType).map(([type, entityIds]) =>
-      fetchRecommendationsWithEntitiesAndTags({
-        entityType: type as EntityType,
-        entityIds,
+    Object.entries(groupedByType).map(([type, entities]) => {
+      // Pick the first entity’s coords
+      const { lat, lon } = entities[0].location;
+
+      return fetchRecommendationsWithEntitiesAndTags({
+        entityType: "place",
+        entityIds: entities.map((e) => e.entityId),
         tagIds: finalTagIds,
+        // Two-element [lat, lon] → your helper turns it into WKT POINT(lon lat)
+        location: [lat.toString(), lon.toString()],
         take: 5,
-      })
-    )
+      });
+    })
   );
   const combinedRecs = recLists.flat();
   const recsJson = JSON.stringify(combinedRecs, null, 2);
   const responseSystemPrompt =
     "You are an AI Recommender Assistant.\n" +
     "You are to answer to the user based on the Data we got from Qloo.\n" +
-    // `Based on the user's input, here are combined Qloo recommendations: ${recsJson}\n` +
     "Now craft a friendly,detailed,  concise natural-language reply that explains and lists them, including available ratings, details, platforms etc etc.";
 
   const response = streamText({
@@ -406,234 +400,61 @@ const searchQloo = async ({
   const json = await res.json();
   console.log("Search JSON", json);
   const first = Array.isArray(json.results) && json.results[0];
-
   if (!first) return null;
+  const {
+    entity_id,
+    name,
+    location,
+  } = first as {
+    entity_id: string;
+    name: string;
+    location: { lat: number; lon: number };
+  };
 
   return {
-    entityId: String(first.entity_id),
-    name: first.name,
+    entityId: String(entity_id),
+    name,
+    location,
   };
 };
-
-interface SlimMovie {
-  name: string;
-  releaseYear?: number;
-  releaseDate?: string;
-  description?: string;
-  contentRating?: string;
-  duration?: number;
-  ratings?: {
-    rottenTomatoes?: { critic: number; user: number };
-    imdb?: { rating: number; votes: number };
-  };
-}
-
-interface SlimEntity {
-  entityId: string;
-  name: string;
-  type: EntityType;
-  shortDescription?: string;
-  imageUrl?: string;
-  tags?: { id: string; name: string }[];
-  external?: any;
-  metadata?: Record<string, any>;
-}
-
-function slimMovie(ent: any): SlimEntity {
-  const p = ent.properties || {};
-  const ext = ent.external || {};
-  const rt = ext.rottentomatoes?.[0];
-  const im = ext.imdb?.[0];
-  return {
-    entityId: ent.entity_id,
-    name: ent.name,
-    type: "movie",
-    shortDescription: p.description,
-    imageUrl: p.image?.url,
-    tags: ent.tags?.map((t: any) => ({ id: t.id, name: t.name })),
-    external: {
-      imdb: ext.imdb?.[0],
-      rottenTomatoes: { critic: rt?.critic_rating, user: rt?.user_rating },
-    },
-    metadata: {
-      releaseDate: p.release_date,
-      releaseYear: p.release_year,
-      contentRating: p.content_rating,
-      duration: p.duration,
-      imdbRating: im?.user_rating,
-      imdbVotes: im?.user_rating_count,
-    },
-  };
-}
-function slimVideoGame(ent: any): SlimEntity {
-  const { akas, ...props } = ent.properties || {};
-  return {
-    entityId: ent.entity_id,
-    name: ent.name,
-    type: "game",
-    shortDescription: props.description,
-    imageUrl: props.image?.url,
-    external: ent.external,
-    metadata: props,
-  };
-}
-function slimBook(ent: any): SlimEntity {
-  const p = ent.properties || {};
-  return {
-    entityId: ent.entity_id,
-    name: ent.name,
-    type: "book",
-    shortDescription: p.short_description || p.description,
-    imageUrl: p.image?.url,
-    tags: ent.tags?.map((t: any) => ({ id: t.id, name: t.name })),
-    external: ent.external,
-    metadata: {
-      isbn10: p.isbn10,
-      isbn13: p.isbn13,
-      pageCount: p.page_count,
-      language: p.language,
-      publicationDate: p.publication_date,
-      publisher: p.publisher,
-      format: p.format,
-    },
-  };
-}
-
-function slimBrand(ent: any): SlimEntity {
-  const p = ent.properties || {};
-  return {
-    entityId: ent.entity_id,
-    name: ent.name,
-    type: "brand",
-    shortDescription: p.short_description,
-    imageUrl: p.image?.url,
-    tags: ent.tags?.map((t: any) => ({ id: t.id, name: t.name })),
-    metadata: {
-      headquartered: p.headquartered,
-      inception: p.inception,
-      industry: p.industry,
-      officialSite: p.official_site,
-      parentOrganization: p.parent_organization,
-      ownedBy: p.owned_by,
-      products: p.products,
-    },
-    external: ent.external,
-  };
-}
-
-function slimDownEntities(raw: any, entityType: EntityType): SlimEntity[] {
-  if (!raw?.results?.entities) return [];
-  return raw.results.entities.map((ent: any) => {
-    switch (entityType) {
-      case "movie":
-        return slimMovie(ent);
-      case "book":
-        return slimBook(ent);
-      case "brand":
-        return slimBrand(ent);
-      case "game":
-        return slimVideoGame(ent);
-      default:
-        return {
-          entityId: ent.entity_id,
-          name: ent.name,
-          type: entityType,
-          shortDescription:
-            ent.properties?.short_description || ent.properties?.description,
-          imageUrl: ent.properties?.image?.url,
-          tags: ent.tags?.map((t: any) => ({ id: t.id, name: t.name })),
-          metadata: ent.properties,
-          external: ent.external,
-        };
-    }
-  });
-}
-
-const fetchRecommendationsBatch = async ({
-  entityType,
-  entityIds,
-  take = 5,
-}: {
-  entityType: EntityType;
-  entityIds: string[];
-  take?: number;
-}): Promise<SlimMovie[]> => {
-  const urn = ENTITY_TYPES[entityType];
-
-  const params = new URLSearchParams({
-    "filter.type": urn,
-    "signal.interests.entities": entityIds.join(","),
-    take: take.toString(),
-  });
-
-  const url = `${process.env.QLOO_BASE_URL}/v2/insights?${params.toString()}`;
-
-  const res = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Key": process.env.QLOO_API_KEY!,
-    },
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    console.error("Qloo recommendations error:", errText);
-    return [];
-  }
-
-  const data = await res.json();
-  console.log("BATCH REC:", data.results.entities);
-  return slimDownEntities(data, entityType);
-};
-
-interface FetchByTagsOpts {
-  entityType: EntityType;
-  tagIds: string[];
-  take?: number;
-}
-
-async function fetchRecommendationsByTags({
-  entityType,
-  tagIds,
-  take = 5,
-}: FetchByTagsOpts): Promise<SlimEntity[]> {
-  const urn = ENTITY_TYPES[entityType];
-  const url = new URL(`${process.env.QLOO_BASE_URL}/v2/insights`);
-  url.searchParams.set("filter.type", urn);
-  url.searchParams.set("filter.tags", tagIds.join(","));
-  url.searchParams.set("take", String(take));
-  console.log("FETCH REC BY tags");
-  console.log("Tags", tagIds.join(","));
-  const res = await fetch(url.toString(), {
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Key": process.env.QLOO_API_KEY!,
-    },
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
-  console.log("FETCH REC TAGS", data.results.entities);
-  return slimDownEntities(data, entityType);
-}
 
 async function fetchRecommendationsWithEntitiesAndTags({
   entityType,
+  location,
   entityIds,
   tagIds,
   take = 5,
 }: {
   entityType: EntityType;
+  location: string[];
   entityIds: string[];
   tagIds: string[];
   take?: number;
-}): Promise<SlimEntity[]> {
+}): Promise<any[]> {
   const urn = ENTITY_TYPES[entityType];
   const url = new URL(`${process.env.QLOO_BASE_URL}/v2/insights`);
   url.searchParams.set("filter.type", urn);
   url.searchParams.set("signal.interests.entities", entityIds.join(","));
-  if (tagIds.length)
+  if (tagIds.length) {
     url.searchParams.set("signal.interests.tags", tagIds.join(","));
+  }
   url.searchParams.set("take", String(take));
+
+  if (location.length) {
+    let locParam: string;
+
+    if (location.length === 1) {
+      locParam = location[0];
+    } else if (location.length === 2) {
+      // [lat, lon] → WKT POINT(lon lat)
+      const [lat, lon] = location;
+      locParam = `POINT(${lon} ${lat})`;
+    } else {
+      locParam = location[0];
+    }
+
+    url.searchParams.set("signal.location", locParam);
+  }
 
   const res = await fetch(url.toString(), {
     headers: {
@@ -643,56 +464,8 @@ async function fetchRecommendationsWithEntitiesAndTags({
   });
   if (!res.ok) return [];
   const data = await res.json();
-  console.log("FETCH REc BY ID and TAgs", data.results.entities);
-  return slimDownEntities(data, entityType);
+  console.log("FETCH Rec BY ID and TAgs", data.results.entities);
+  return data.results.entities;
 }
 
-async function fetchRecommendationsDynamic({
-  destinationTitle,
-  cuisineTagIds,
-  placeEntityIds,
-  take = 5,
-}: {
-  destinationTitle?: string;
-  cuisineTagIds: string[];
-  placeEntityIds?: string[];
-  take?: number;
-}): Promise<SlimEntity[]> {
-  const url = new URL(`${process.env.QLOO_BASE_URL}/v2/insights`);
 
-  // 1. Always filter by place entities (restaurants, museums)
-  url.searchParams.set("filter.type", ENTITY_TYPES.place);
-
-  // 2. Dynamically resolve and filter by the destination entity
-  if (destinationTitle) {
-    const city = await searchQloo({
-      title: destinationTitle,
-      entityType: "destination",
-    });
-    if (city?.entityId) {
-      url.searchParams.set("filter.entities", city.entityId);
-    }
-  }
-
-  // 3. Boost by cuisine-specific tags (Indian restaurant, etc.)
-  if (cuisineTagIds.length) {
-    url.searchParams.set("signal.interests.tags", cuisineTagIds.join(","));
-  }
-
-  // 4. Optionally include any pre-resolved place entity IDs for personalization
-  if (placeEntityIds && placeEntityIds.length) {
-    url.searchParams.set("signal.interests.entities", placeEntityIds.join(","));
-  }
-
-  url.searchParams.set("take", String(take));
-
-  const res = await fetch(url.toString(), {
-    headers: {
-      "X-Api-Key": process.env.QLOO_API_KEY!,
-      "Content-Type": "application/json",
-    },
-  });
-  const data = await res.json();
-  console.log("FETCH REC DYNAMIC", data.results.entities)
-  return slimDownEntities(data, "place");
-}

@@ -32,7 +32,7 @@ export function Chat({
     useChat({
       messages: messagesFromDb,
       transport: new DefaultChatTransport({
-        api: "/api/chat",
+        api: "/api/places",
         prepareSendMessagesRequest({ messages, id, body }) {
           return {
             body: {
