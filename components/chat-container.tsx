@@ -52,7 +52,7 @@ export function Chat({
         const dbParts = message.parts
           .filter(isTextPart)
           .map((p) => ({ content: p.text }));
-        // await saveMessage(dbParts, message.role, userId);
+        await saveMessage(dbParts, message.role, userId);
       },
       onError: (error) => {
         if (error) {
